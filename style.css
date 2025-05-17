@@ -1,0 +1,90 @@
+body {
+    margin: 0;
+    font-family: 'Manrope', sans-serif;
+    background-color: #f0f2f5; /* A light grey background similar to the image's page bg */
+    color: #333; /* Default text color */
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px; /* Adjust padding as needed */
+    background-color: #ffffff; /* White background for the navbar */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Subtle shadow for depth */
+    height: 70px; /* Approximate height */
+    box-sizing: border-box;
+}
+
+.navbar-logo {
+    font-size: 24px; /* Adjust size as needed */
+    font-weight: 800; /* Extra bold for the logo */
+}
+
+.logo-clip {
+    color: #007bff; /* Blue color for [Clip] - adjust if you have a specific blue */
+}
+
+.logo-cut {
+    color: #212529; /* Dark color for Cut */
+}
+
+.navbar-links {
+    display: flex;
+    gap: 10px; /* Space between buttons */
+}
+
+.nav-button {
+    display: flex;
+    align-items: center;
+    gap: 6px; /* Space between icon and text */
+    padding: 8px 16px;
+    border: 1px solid transparent; /* Keep space consistent, border can be added for non-active */
+    border-radius: 20px; /* Rounded corners */
+    background-color: #f8f9fa; /* Light grey for non-active buttons */
+    color: #495057; /* Darker grey text for non-active */
+    font-family: 'Manrope', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.nav-button .icon-small {
+    font-size: 18px; /* Adjust icon size */
+}
+
+.nav-button:hover {
+    background-color: #e9ecef; /* Slightly darker on hover for non-active */
+}
+
+.nav-button.active {
+    background-color: #007bff; /* Blue background for active button */
+    color: #ffffff; /* White text for active button */
+    border-color: #007bff;
+}
+
+.nav-button.active .material-icons-outlined {
+    color: #ffffff; /* Ensure icon also turns white */
+}
+
+
+.navbar-settings .settings-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.navbar-settings .settings-button .material-icons-outlined {
+    font-size: 26px; /* Adjust icon size */
+    color: #007bff; /* Blue for the settings icon */
+}
+
+.navbar-settings .settings-button:hover {
+    background-color: rgba(0, 123, 255, 0.1); /* Light blueish background on hover */
+}

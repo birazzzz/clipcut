@@ -1,7 +1,319 @@
-<html>
-    <head>
-        <title>Home</title>
-    </head>
-    <body>
-        <h1>Home</h1>
-    </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClipCut Navbar - Floating Design</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <style>
+        /* Basic Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* CSS Variables for Theming */
+        :root {
+            --page-bg-light: #F3F1F0;
+            --navbar-bg-light: #FFFFFF;
+            --primary-color-light: #219BD9;
+            --text-color-logo-light: #333333;
+            --nav-button-bg-light: #E0E0E0; /* Default background for nav buttons and toggle track */
+            --nav-button-text-light: #555555;
+            --nav-button-bg-hover-light: #D1D1D1;
+            --nav-button-active-bg-light: #219BD9;
+            --nav-button-active-text-light: #FFFFFF;
+            --icon-color-light: #219BD9; /* Used for icons NOT on primary background */
+            --toggle-knob-icon-color-light: #FFFFFF; /* Icon on the toggle knob */
+
+            --page-bg-dark: #1A1A1A;
+            --navbar-bg-dark: #2C2C2C;
+            --primary-color-dark: #219BD9; /* Same primary color */
+            --text-color-logo-dark: #E0E0E0;
+            --nav-button-bg-dark: #3D3D3D; /* Default background for nav buttons and toggle track */
+            --nav-button-text-dark: #C0C0C0;
+            --nav-button-bg-hover-dark: #505050;
+            --nav-button-active-bg-dark: #219BD9;
+            --nav-button-active-text-dark: #FFFFFF;
+            --icon-color-dark: #219BD9; /* Used for icons NOT on primary background */
+            --toggle-knob-icon-color-dark: #FFFFFF; /* Icon on the toggle knob */
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: var(--page-bg, var(--page-bg-light));
+            min-height: 150vh; /* To see sticky effect and margins */
+            transition: background-color 0.3s ease;
+            /* Add padding to body to ensure margins of navbar are visible at edges of viewport */
+            padding: 1px; /* Minimal padding to prevent margin collapse if navbar is first child */
+        }
+
+        body.dark-mode {
+            --page-bg: var(--page-bg-dark);
+            --navbar-bg: var(--navbar-bg-dark);
+            --primary-color: var(--primary-color-dark);
+            --text-color-logo: var(--text-color-logo-dark);
+            --nav-button-bg: var(--nav-button-bg-dark);
+            --nav-button-text: var(--nav-button-text-dark);
+            --nav-button-bg-hover: var(--nav-button-bg-hover-dark);
+            --nav-button-active-bg: var(--nav-button-active-bg-dark);
+            --nav-button-active-text: var(--nav-button-active-text-dark);
+            --icon-color: var(--icon-color-dark);
+            --toggle-knob-icon-color: var(--toggle-knob-icon-color-dark);
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            /* --- Margins & Sticky Top --- */
+            margin: 32px 48px; /* 32px top/bottom, 48px left/right */
+            top: 32px; /* Stick 32px from the top of the viewport */
+            z-index: 1000;
+            
+            /* --- Height, Padding & Border Radius --- */
+            height: 66px; 
+            padding: 0 40px; /* Adjusted horizontal padding inside navbar */
+            border-radius: 100px; /* Large border-radius for pill shape */
+            
+            background-color: var(--navbar-bg, var(--navbar-bg-light));
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Subtle shadow for floating effect */
+            transition: background-color 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+        }
+
+        /* Logo Styling */
+        .navbar-logo {
+            font-size: 24px; 
+            font-weight: 700;
+            color: var(--text-color-logo, var(--text-color-logo-light));
+            flex-shrink: 0;
+            transition: color 0.3s ease;
+        }
+
+        .navbar-logo .highlight {
+            color: var(--primary-color, var(--primary-color-light));
+            transition: color 0.3s ease;
+        }
+
+        /* Navigation Links Styling */
+        .navbar-links {
+            display: flex;
+            gap: 8px;
+            flex-wrap: nowrap;
+        }
+
+        .nav-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px; 
+            border: none;
+            border-radius: 20px; /* Pill shape for individual buttons */
+            font-family: 'Manrope', sans-serif;
+            font-size: 14px; 
+            font-weight: 600;
+            cursor: pointer;
+            background-color: var(--nav-button-bg, var(--nav-button-bg-light));
+            color: var(--nav-button-text, var(--nav-button-text-light));
+            white-space: nowrap;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .nav-button .material-icons-outlined {
+            font-size: 20px; 
+        }
+
+        .nav-button.active {
+            background-color: var(--nav-button-active-bg, var(--nav-button-active-bg-light));
+            color: var(--nav-button-active-text, var(--nav-button-active-text-light));
+        }
+        .nav-button.active .material-icons-outlined { /* Ensure icon color on active button is also contrasting if needed */
+             color: var(--nav-button-active-text, var(--nav-button-active-text-light));
+        }
+
+
+        .nav-button:hover:not(.active) {
+            background-color: var(--nav-button-bg-hover, var(--nav-button-bg-hover-light));
+        }
+
+        /* New Theme Toggle Button Styling */
+        .navbar-settings { /* Container for the toggle */
+            display: flex;
+            align-items: center;
+        }
+
+        .theme-toggle-button {
+            background-color: var(--nav-button-bg, var(--nav-button-bg-light)); /* Track color */
+            border: none;
+            cursor: pointer;
+            padding: 3px; /* Padding around the knob */
+            border-radius: 15px; /* Half of height to make it a pill */
+            display: flex;
+            align-items: center;
+            width: 56px; /* Width of the track */
+            height: 30px; /* Height of the track */
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
+
+        .theme-toggle-knob {
+            background-color: var(--primary-color, var(--primary-color-light)); /* Knob color */
+            width: 24px; /* Diameter of the knob */
+            height: 24px; /* Diameter of the knob */
+            border-radius: 50%; /* Make it circular */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            left: 3px; /* Initial position */
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+
+        .theme-toggle-knob .material-icons-outlined {
+            font-size: 16px; /* Smaller icon to fit in the knob */
+            color: var(--toggle-knob-icon-color, var(--toggle-knob-icon-color-light)); /* Icon color on knob */
+        }
+
+        body.dark-mode .theme-toggle-knob {
+            transform: translateX(26px); /* 56px (width) - 24px (knob) - 3px (padding left) - 3px (padding right implied) = 26px */
+        }
+
+
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 1200px) {
+            .navbar {
+                padding: 0 30px; /* Adjust horizontal padding inside navbar */
+                margin: 32px 24px; /* Reduce side margins */
+                top: 32px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                height: auto; 
+                min-height: 66px; 
+                padding: 20px; /* Uniform padding for stacked layout */
+                margin: 20px 16px; /* Smaller margins for mobile */
+                top: 20px; /* Adjust sticky top for smaller margin */
+                flex-direction: column;
+                gap: 15px; 
+                align-items: stretch; /* Stretch items, logo will be centered by its own style */
+                border-radius: 30px; /* Slightly less rounded for stacked version */
+            }
+            .navbar-logo {
+                text-align: center;
+                margin-bottom: 10px; /* Space below logo when stacked */
+            }
+            .navbar-links {
+                order: 1; /* Links below logo/toggle */
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 10px; 
+            }
+            .nav-button {
+                flex-grow: 1; /* Allow buttons to take available space */
+                justify-content: center;
+                padding: 10px 12px; 
+                font-size: 13px;
+            }
+            .navbar-settings { 
+                order: 0; /* Toggle above links */
+                align-self: center; /* Center the toggle switch */
+                margin-bottom: 10px; /* Space below toggle before links */
+                /* No longer position absolute, flows in the column */
+            }
+        }
+
+         @media (max-width: 480px) {
+            .navbar {
+                padding: 15px; 
+                margin: 16px 10px;
+                top: 16px;
+                gap: 10px;
+                border-radius: 25px;
+            }
+            .nav-button {
+                font-size: 12px; 
+                padding: 8px 10px;
+            }
+            .navbar-links {
+                flex-direction: column; 
+                align-items: stretch; 
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-logo">
+            <span class="highlight">[Clip]</span>Cut
+        </div>
+
+        <div class="navbar-links">
+            <button class="nav-button active">
+                <span class="material-icons-outlined">movie</span>
+                <span class="button-text">Videos</span>
+            </button>
+            <button class="nav-button">
+                <span class="material-icons-outlined">photo_size_select_actual</span>
+                <span class="button-text">Thumbnail</span>
+            </button>
+            <button class="nav-button">
+                <span class="material-icons-outlined">article</span>
+                <span class="button-text">Transcript</span>
+            </button>
+        </div>
+
+        <div class="navbar-settings">
+             <button id="themeToggle" class="theme-toggle-button" aria-label="Toggle theme">
+                <span class="theme-toggle-knob">
+                    <span class="material-icons-outlined">light_mode</span>
+                </span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        const currentTheme = localStorage.getItem('theme');
+        // Updated to target the icon within the knob
+        const themeIcon = themeToggle.querySelector('.theme-toggle-knob .material-icons-outlined');
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                body.classList.add('dark-mode');
+                if (themeIcon) themeIcon.textContent = 'dark_mode'; // Moon icon
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.remove('dark-mode');
+                if (themeIcon) themeIcon.textContent = 'light_mode'; // Sun icon
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        if (currentTheme) {
+            applyTheme(currentTheme);
+        } else {
+             applyTheme('light'); // Default to light
+        }
+
+        themeToggle.addEventListener('click', () => {
+            if (body.classList.contains('dark-mode')) {
+                applyTheme('light');
+            } else {
+                applyTheme('dark');
+            }
+        });
+    </script>
+
+</body>
+</html>

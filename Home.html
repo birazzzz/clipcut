@@ -41,19 +41,12 @@
         </div>
     </nav>
 
-    <div id="main-content"></div>
+    <div class="bottom-content">
+        <div class="input">
+            <input type="text" class="text-field" placeholder="Enter your text here...">
+        </div>
+    </div>
 
-    <script type="module">
-        import VideoInfo from './video-info.js';
-        
-        // Initialize the video info component
-        const videoInfo = new VideoInfo();
-        videoInfo.mount(document.getElementById('main-content'));
-        
-        // Example: Load video info for a specific video ID
-        videoInfo.loadVideoInfo('dQw4w9WgXcQ'); // Replace with actual video ID
-    </script>
-    
     <script>
         const themeToggle = document.getElementById('themeToggle');
         const body = document.body;

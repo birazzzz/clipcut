@@ -140,12 +140,10 @@ body.dark-mode {
     transition: color 0.3s ease;
 }
 
-.navbar-links { 
-    display: flex; 
-    gap: 8px; 
+.navbar-links {
+    display: flex;
+    gap: 16px !important;
     flex-wrap: nowrap;
-    justify-content: center;
-    flex: 1;
 }
 
 .nav-button { 

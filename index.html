@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClipCut Page</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-logo">
+                <span class="highlight">[Clip]</span>Cut
+            </div>
+            <div class="navbar-links">
+                <button class="nav-button active"> <span class="material-icons-outlined">movie</span>
+                    <span class="button-text">Videos</span>
+                </button>
+                <button class="nav-button">
+                    <span class="material-icons-outlined">photo_size_select_actual</span>
+                    <span class="button-text">Thumbnail</span>
+                </button>
+                <button class="nav-button">
+                    <span class="material-icons-outlined">article</span>
+                    <span class="button-text">Transcript</span>
+                </button>
+            </div>
+            <div class="navbar-settings">
+                <button id="themeToggle" class="theme-toggle-button" aria-label="Toggle theme">
+                    <span class="theme-toggle-knob">
+                        <span class="material-icons-outlined">light_mode</span>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <section class="clip-input-section">
+        <div class="clip-input-container">
+            <textarea id="clipTextarea" class="main-video-link-textarea" placeholder="Paste video link and tell us what to clip"></textarea>
+            <div class="clip-controls">
+            <button id="fullClipButton" class="nav-button nav-button-outlined clip-mode-button">
+                <span class="material-icons-outlined">aspect_ratio</span>
+                <span>Full Clip</span>
+            </button>
+            <span class="controls-label">YouTube Only:</span>
+            <button id="promptButton" class="nav-button nav-button-outlined clip-mode-button"> 
+                <span class="material-icons-outlined">list_alt</span>
+                <span>Prompt</span>
+            </button>
+
+            <div class="clip-dropdown-container">
+                <button id="clipButton" class="nav-button nav-button-outlined clip-dropdown-button clip-mode-button" aria-haspopup="true" aria-expanded="false">
+                    <span class="clip-button-text-main">Clip</span><span class="clip-button-text-suffix"></span>
+                    <span class="material-icons-outlined">arrow_drop_down</span>
+                </button>
+                <div class="clip-dropdown-menu" role="menu">
+                    <button class="dropdown-item" role="menuitem" data-parent-button-id="clipButton" data-value="URL">
+                        <span class="material-icons-outlined">link</span>
+                        <span>Current Time URL</span>
+                    </button>
+                    <button class="dropdown-item" role="menuitem" data-parent-button-id="clipButton" data-value="Time">
+                        <span class="material-icons-outlined">crop_square</span> 
+                        <span>Time Stamps</span>
+                    </button>
+                </div>
+            </div>
+
+            <button id="enterButton" class="nav-button enter-button"> <span class="material-icons-outlined">subdirectory_arrow_left</span>
+                <span>Enter</span>
+            </button>
+        </div>
+    </section>
+
+    <section id="videoInfoDisplay" class="video-info-display">
+        <p class="loading-message">Enter a YouTube link and press Enter to see details.</p>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -9,84 +9,130 @@
 :root {
     --page-bg-light: #F3F1F0;
     --navbar-bg-light: #FFFFFF;
-    --primary-color-light: #219BD9;
-    --text-color-logo-light: #333333;
-    --nav-button-bg-light: #EAE5E2;
-    --nav-button-text-light: #555555;
-    --nav-button-bg-hover-light: #D1D1D1;
+    --card-bg-light: #FFFFFF; 
+    --dropdown-bg-light: #FFFFFF; 
+    --primary-color-light: #219BD9; /* RGB: 33, 155, 217 */
+    --text-color-light: #333333; 
+    --text-secondary-light: #555555; 
+    --input-border-light: #D1D1D1;
+    --input-bg-light: #FFFFFF; 
+    --nav-button-bg-light: #E9ECEF; 
+    --nav-button-text-light: #495057;
+    --nav-button-bg-hover-light: #DEE2E6;
+    
     --nav-button-active-bg-light: #219BD9;
     --nav-button-active-text-light: #FFFFFF;
+
+    --clip-mode-button-active-bg-light: rgba(33, 155, 217, 0.12);
+    --clip-mode-button-active-text-light: var(--primary-color-light);
+
     --icon-color-light: #219BD9;
     --toggle-knob-icon-color-light: #FFFFFF;
 
-    --page-bg-dark: #1A1A1A;
-    --navbar-bg-dark: #2C2C2C;
-    --primary-color-dark: #219BD9;
-    --text-color-logo-dark: #E0E0E0;
-    --nav-button-bg-dark: #3D3D3D;
+    --nav-button-outlined-bg-light: transparent;
+    --nav-button-outlined-border-light: #DADADA;
+    --nav-button-outlined-text-light: #495057;
+    --nav-button-outlined-hover-bg-light: rgba(0,0,0,0.04); 
+
+    --button-disabled-bg-light: #CED4DA;
+    --button-disabled-text-light: #6C757D;
+
+
+    --page-bg-dark: #121212; 
+    --navbar-bg-dark: #1E1E1E; 
+    --card-bg-dark: #1E1E1E;   
+    --dropdown-bg-dark: #2C2C2C; 
+    --primary-color-dark: #219BD9; 
+    --text-color-dark: #E0E0E0;
+    --text-secondary-dark: #A0A0A0;
+    --input-border-dark: #4A4A4A;
+    --input-bg-dark: #2C2C2C; 
+    --nav-button-bg-dark: #333333;
     --nav-button-text-dark: #C0C0C0;
-    --nav-button-bg-hover-dark: #505050;
+    --nav-button-bg-hover-dark: #454545;
+
     --nav-button-active-bg-dark: #219BD9;
     --nav-button-active-text-dark: #FFFFFF;
+
+    --clip-mode-button-active-bg-dark: rgba(33, 155, 217, 0.12); 
+    --clip-mode-button-active-text-dark: var(--primary-color-dark);
+
     --icon-color-dark: #219BD9;
     --toggle-knob-icon-color-dark: #FFFFFF;
+
+    --nav-button-outlined-bg-dark: transparent; 
+    --nav-button-outlined-border-dark: #5A5A5A; 
+    --nav-button-outlined-text-dark: #A0A0A0;  
+    --nav-button-outlined-hover-bg-dark: rgba(255,255,255,0.06); 
+
+    --button-disabled-bg-dark: #343A40; 
+    --button-disabled-text-dark: #6C757D; 
 }
 
 body {
     font-family: 'Manrope', sans-serif;
     background-color: var(--page-bg, var(--page-bg-light));
-    background-image: url('./assets/background.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    filter: brightness(1);
-    height: 100vh; /* Changed from min-height to fixed height */
-    overflow: hidden; /* Prevents scrolling */
     transition: background-color 0.3s ease;
-    padding: 1px;
-    margin: 0; /* Ensure no default margins */
+    padding: 1px; 
+    color: var(--text-color, var(--text-color-light));
 }
 
 body.dark-mode {
     --page-bg: var(--page-bg-dark);
     --navbar-bg: var(--navbar-bg-dark);
+    --card-bg: var(--card-bg-dark);
+    --dropdown-bg: var(--dropdown-bg-dark);
     --primary-color: var(--primary-color-dark);
-    --text-color-logo: var(--text-color-logo-dark);
+    --text-color: var(--text-color-dark);
+    --text-secondary: var(--text-secondary-dark);
+    --input-border: var(--input-border-dark);
+    --input-bg: var(--input-bg-dark);
     --nav-button-bg: var(--nav-button-bg-dark);
     --nav-button-text: var(--nav-button-text-dark);
     --nav-button-bg-hover: var(--nav-button-bg-hover-dark);
+    
     --nav-button-active-bg: var(--nav-button-active-bg-dark);
     --nav-button-active-text: var(--nav-button-active-text-dark);
+
+    --clip-mode-button-active-bg: var(--clip-mode-button-active-bg-dark);
+    --clip-mode-button-active-text: var(--clip-mode-button-active-text-dark);
+
     --icon-color: var(--icon-color-dark);
     --toggle-knob-icon-color: var(--toggle-knob-icon-color-dark);
+
+    --nav-button-outlined-bg: var(--nav-button-outlined-bg-dark);
+    --nav-button-outlined-border: var(--nav-button-outlined-border-dark);
+    --nav-button-outlined-text: var(--nav-button-outlined-text-dark);
+    --nav-button-outlined-hover-bg: var(--nav-button-outlined-hover-bg-dark);
+
+    --button-disabled-bg: var(--button-disabled-bg-dark);
+    --button-disabled-text: var(--button-disabled-text-dark);
 }
 
 .navbar {
+    display: flex; justify-content: space-between; align-items: center;
+    position: sticky; margin: 32px auto; top: 32px; z-index: 1000;
+    height: 66px; padding: 0 40px; border-radius: 100px; 
+    background-color: var(--navbar-bg, var(--navbar-bg-light));
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+    transition: background-color 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+    max-width: 1024px;
+    width: calc(100% - 64px);
+}
+
+.navbar-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: sticky;
-    /* --- Margins & Sticky Top --- */
-    margin: 32px 200px; /* 32px top/bottom, 48px left/right */
-    top: 32px; /* Stick 32px from the top of the viewport */
-    z-index: 1000;
-    
-    /* --- Height, Padding & Border Radius --- */
-    height: 66px; 
-    padding: 0 42px; /* Adjusted horizontal padding inside navbar */
-    border-radius: 100px; /* Large border-radius for pill shape */
-    
-    background-color: var(--navbar-bg, var(--navbar-bg-light));
-    transition: background-color 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+    width: 100%;
+    gap: 16px;
 }
 
-/* Logo Styling */
 .navbar-logo {
-    font-size: 24px; 
-    font-weight: 900;
-    color: var(--text-color-logo, var(--text-color-logo-light));
-    flex-shrink: 0;
-    transition: color 0.3s ease;
+    font-size: 24px; font-weight: 700;
+    color: var(--text-color, var(--text-color-light));
+    flex-shrink: 0; transition: color 0.3s ease;
+    white-space: nowrap;
 }
 
 .navbar-logo .highlight {
@@ -94,206 +140,321 @@ body.dark-mode {
     transition: color 0.3s ease;
 }
 
-/* Navigation Links Styling */
-.navbar-links {
-    display: flex;
-    gap: 16px;
+.navbar-links { 
+    display: flex; 
+    gap: 8px; 
     flex-wrap: nowrap;
+    justify-content: center;
+    flex: 1;
 }
 
-.nav-button {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 8px 16px; 
-    border: none;
-    border-radius: 12px; /* Pill shape for individual buttons */
-    font-family: 'Manrope', sans-serif;
-    font-size: 14px; 
-    font-weight: 600;
+.nav-button { 
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; padding: 8px 16px; 
+    border: 1px solid transparent; 
+    border-radius: 12px; 
+    font-family: 'Manrope', sans-serif; font-size: 14px; font-weight: 600;
     cursor: pointer;
     background-color: var(--nav-button-bg, var(--nav-button-bg-light));
     color: var(--nav-button-text, var(--nav-button-text-light));
     white-space: nowrap;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, opacity 0.3s ease;
 }
-
 .nav-button .material-icons-outlined {
-    font-size: 20px; 
+    font-size: 20px; color: inherit; 
+    transition: color 0.3s ease;
 }
-
-.nav-button.active {
+.nav-button.active:not(.clip-mode-button) { 
     background-color: var(--nav-button-active-bg, var(--nav-button-active-bg-light));
     color: var(--nav-button-active-text, var(--nav-button-active-text-light));
+    border-color: var(--nav-button-active-bg, var(--nav-button-active-bg-light)); 
 }
-.nav-button.active .material-icons-outlined { /* Ensure icon color on active button is also contrasting if needed */
-     color: var(--nav-button-active-text, var(--nav-button-active-text-light));
+.nav-button.active:not(.clip-mode-button) .material-icons-outlined { 
+    color: var(--nav-button-active-text, var(--nav-button-active-text-light));
 }
 
+.clip-mode-button.active {
+    background-color: var(--clip-mode-button-active-bg, var(--clip-mode-button-active-bg-light));
+    color: var(--clip-mode-button-active-text, var(--clip-mode-button-active-text-light));
+    border-color: transparent; 
+}
+.clip-mode-button.active .material-icons-outlined {
+    color: var(--clip-mode-button-active-text, var(--clip-mode-button-active-text-light));
+}
 
-.nav-button:hover:not(.active) {
+.nav-button:hover:not(.active):not(:disabled) {
     background-color: var(--nav-button-bg-hover, var(--nav-button-bg-hover-light));
 }
 
-/* New Theme Toggle Button Styling */
-.navbar-settings { /* Container for the toggle */
-    display: flex;
-    align-items: center;
+.nav-button-outlined {
+    background-color: var(--nav-button-outlined-bg, var(--nav-button-outlined-bg-light));
+    border: 1px solid var(--nav-button-outlined-border, var(--nav-button-outlined-border-light));
+    color: var(--nav-button-outlined-text, var(--nav-button-outlined-text-light));
+}
+.nav-button-outlined .material-icons-outlined {
+     color: var(--nav-button-outlined-text, var(--nav-button-outlined-text-light));
+}
+.nav-button-outlined:hover:not(.active):not(:disabled) {
+    background-color: var(--nav-button-outlined-hover-bg, var(--nav-button-outlined-hover-bg-light));
+    border-color: var(--nav-button-outlined-border, var(--nav-button-outlined-border-light)); 
 }
 
+.nav-button:disabled, .nav-button.disabled {
+    background-color: var(--button-disabled-bg, var(--button-disabled-bg-light)) !important;
+    color: var(--button-disabled-text, var(--button-disabled-text-light)) !important;
+    border-color: var(--button-disabled-bg, var(--button-disabled-bg-light)) !important;
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+.nav-button:disabled .material-icons-outlined,
+.nav-button.disabled .material-icons-outlined {
+    color: var(--button-disabled-text, var(--button-disabled-text-light)) !important;
+}
+
+.navbar-settings { display: flex; align-items: center; }
 .theme-toggle-button {
-    background-color: var(--nav-button-bg, var(--nav-button-bg-light)); /* Track color */
-    border: none;
-    cursor: pointer;
-    padding: 3px; /* Padding around the knob */
-    border-radius: 15px; /* Half of height to make it a pill */
-    display: flex;
-    align-items: center;
-    width: 56px; /* Width of the track */
-    height: 30px; /* Height of the track */
-    position: relative;
+    background-color: var(--nav-button-bg, var(--nav-button-bg-light)); 
+    border: none; cursor: pointer; padding: 3px; 
+    border-radius: 15px; display: flex; align-items: center;
+    width: 56px; height: 30px; position: relative;
     transition: background-color 0.3s ease;
 }
-
 .theme-toggle-knob {
-    background-color: var(--primary-color, var(--primary-color-light)); /* Knob color */
-    width: 24px; /* Diameter of the knob */
-    height: 24px; /* Diameter of the knob */
-    border-radius: 50%; /* Make it circular */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    left: 3px; /* Initial position */
+    background-color: var(--primary-color, var(--primary-color-light)); 
+    width: 24px; height: 24px; border-radius: 50%; 
+    display: flex; align-items: center; justify-content: center;
+    position: absolute; left: 3px; 
     transition: transform 0.3s ease, background-color 0.3s ease;
 }
-
 .theme-toggle-knob .material-icons-outlined {
-    font-size: 16px; /* Smaller icon to fit in the knob */
-    color: var(--toggle-knob-icon-color, var(--toggle-knob-icon-color-light)); /* Icon color on knob */
+    font-size: 16px; 
+    color: var(--toggle-knob-icon-color, var(--toggle-knob-icon-color-light)); 
+}
+body.dark-mode .theme-toggle-knob { transform: translateX(26px); }
+
+.clip-input-section {
+    background-color: var(--card-bg, var(--card-bg-light));
+    padding: 24px; margin: 0 auto 32px auto; 
+    border-radius: 24px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: background-color 0.3s ease;
+    max-width: 800px;
+}
+.main-video-link-textarea { 
+    width: 100%;
+    min-height: 100px; 
+    padding: 16px;
+    border: 1px solid var(--input-border, var(--input-border-light));
+    border-radius: 12px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 16px;
+    color: var(--text-color, var(--text-color-light));
+    background-color: var(--input-bg, var(--input-bg-light)); 
+    resize: vertical;
+    margin-bottom: 16px; 
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+.main-video-link-textarea::placeholder { color: var(--text-secondary, var(--text-secondary-light)); }
+
+.clip-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.controls-label {
+    font-size: 14px; color: var(--text-secondary, var(--text-secondary-light));
+    margin-right: 4px; transition: color 0.3s ease;
+}
+.enter-button { 
+    margin-left: auto; 
 }
 
-body.dark-mode .theme-toggle-knob {
-    transform: translateX(26px); /* 56px (width) - 24px (knob) - 3px (padding left) - 3px (padding right implied) = 26px */
+.clip-controls .clip-mode-button { 
+    font-size: 14px; 
+    padding: 8px 12px; 
+    gap: 4px; 
+}
+.clip-controls .clip-mode-button .material-icons-outlined {
+    font-size: 20px; 
+}
+
+.clip-dropdown-container { position: relative; display: inline-block; }
+.clip-dropdown-menu {
+    display: none; position: absolute;
+    top: calc(100% + 4px); left: 0; transform: none; 
+    min-width: 220px; 
+    background-color: var(--dropdown-bg, var(--dropdown-bg-light));
+    border-radius: 16px; padding: 8px;
+    box-shadow: 0px 8px 64px -16px rgba(0,0,0,0.2); 
+    z-index: 20; 
+    transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+    opacity: 0; visibility: hidden;
+}
+.clip-dropdown-container:hover .clip-dropdown-menu,
+.clip-dropdown-button:focus + .clip-dropdown-menu, 
+.clip-dropdown-menu:hover { display: block; opacity: 1; visibility: visible; }
+
+.dropdown-item {
+    display: flex; align-items: center; width: 100%;
+    font-size: 14px; padding: 8px 12px; border-radius: 10px; 
+    font-weight: 500; color: var(--text-color, var(--text-color-light)); 
+    background-color: transparent; 
+    border: 1px solid var(--nav-button-outlined-border, var(--nav-button-outlined-border-light)); 
+    cursor: pointer; text-align: left; margin-bottom: 6px; 
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+.dropdown-item:last-child { margin-bottom: 0; }
+.dropdown-item:hover:not(:disabled) { 
+    background-color: var(--nav-button-outlined-hover-bg, var(--nav-button-outlined-hover-bg-light));
+}
+.dropdown-item .material-icons-outlined {
+    font-size: 20px; margin-right: 6px; 
+    color: var(--text-secondary, var(--text-secondary-light)); 
+}
+body.dark-mode .dropdown-item .material-icons-outlined {
+     color: var(--text-secondary, var(--text-secondary-dark));
+}
+body.dark-mode .dropdown-item { border: 1px solid var(--input-border-dark); }
+body.dark-mode .dropdown-item:hover:not(:disabled) { 
+    background-color: var(--nav-button-bg-hover-dark);
+}
+.clip-dropdown-button .material-icons-outlined:last-child { margin-left: 4px; transition: transform 0.2s ease; }
+
+/* Video Info Display Area */
+.video-info-display {
+    background-color: var(--card-bg, var(--card-bg-light));
+    padding: 20px;
+    margin: 0 48px 32px 48px; /* Consistent with clip-input-section */
+    border-radius: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    display: none; /* Hidden by default */
+    text-align: center;
+    transition: background-color 0.3s ease;
+}
+.video-info-display img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    border: 1px solid var(--input-border, var(--input-border-light));
+}
+.video-info-display h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-color, var(--text-color-light));
+    margin-bottom: 8px;
+}
+.video-info-display .error-message {
+    color: #dc3545; /* Bootstrap danger color for errors */
+    font-weight: 500;
+}
+.video-info-display .loading-message {
+     color: var(--text-secondary, var(--text-secondary-light));
 }
 
 
 /* --- Responsive Adjustments --- */
-@media (max-width: 1200px) {
-    .navbar {
-        padding: 0 30px; /* Adjust horizontal padding inside navbar */
-        margin: 32px 24px; /* Reduce side margins */
-        top: 32px;
-    }
+@media (max-width: 1200px) { 
+    .navbar { padding: 0 30px; margin: 32px auto; top: 32px; }
+    .clip-input-section, .video-info-display { margin-left: auto; margin-right: auto; }
 }
-
-@media (max-width: 768px) {
+@media (max-width: 768px) { 
     .navbar {
-        height: auto; 
-        min-height: 66px; 
-        padding: 20px; /* Uniform padding for stacked layout */
-        margin: 20px 16px; /* Smaller margins for mobile */
-        top: 20px; /* Adjust sticky top for smaller margin */
+        margin: 32px auto;
+        padding: 0 20px;
+        height: auto;
+        min-height: 66px;
+    }
+    
+    .navbar-container {
         flex-direction: column;
-        gap: 15px; 
-        align-items: stretch; /* Stretch items, logo will be centered by its own style */
-        border-radius: 30px; /* Slightly less rounded for stacked version */
+        padding: 16px 0;
     }
-    .navbar-logo {
-        text-align: center;
-        margin-bottom: 10px; /* Space below logo when stacked */
+
+    .navbar-logo { 
+        text-align: center; 
+        margin-bottom: 10px; 
     }
-    .navbar-links {
-        order: 1; /* Links below logo/toggle */
-        width: 100%;
-        justify-content: center;
-        flex-wrap: wrap;
+
+    .navbar-links { 
+        order: 1; 
+        width: 100%; 
+        justify-content: center; 
+        flex-wrap: wrap; 
         gap: 10px; 
     }
-    .nav-button {
-        flex-grow: 1; /* Allow buttons to take available space */
-        justify-content: center;
-        padding: 10px 12px; 
+
+    .navbar-settings { 
+        order: 0; 
+        align-self: center; 
+        margin-bottom: 10px; 
+    }
+
+    .clip-controls .clip-mode-button {
+        padding: 8px 12px; 
+        font-size: 13px; 
+    }
+    .clip-controls .clip-mode-button .material-icons-outlined {
+        font-size: 18px; 
+    }
+    .dropdown-item { 
+        padding: 8px 12px; 
         font-size: 13px;
     }
-    .navbar-settings { 
-        order: 0; /* Toggle above links */
-        align-self: center; /* Center the toggle switch */
-        margin-bottom: 10px; /* Space below toggle before links */
-        /* No longer position absolute, flows in the column */
+     .dropdown-item .material-icons-outlined {
+        font-size: 18px;
     }
-}
 
-.bottom-content {
-    position: absolute;
-    bottom: 32px;
-    left: 0;
-    right: 0;
-    padding: 0 32px;
-}
+    .navbar .nav-button { flex-grow: 1; justify-content: center; padding: 10px 12px; font-size: 13px; }
 
-.content-box {
-    background-color: white;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    .clip-input-section, .video-info-display { 
+        margin-left: auto;
+        margin-right: auto;
+        padding: 16px;
+    }
+    .main-video-link-textarea { font-size: 15px; min-height: 80px; }
+    .clip-controls { gap: 8px; }
+    .enter-button { width: 100%; margin-left: 0; margin-top: 8px; }
+    .clip-dropdown-menu { 
+        min-width: calc(100% - 16px); 
+        left: 8px; 
+        transform: none;
+    } 
 }
+@media (max-width: 480px) { 
+    .navbar { 
+        padding: 15px; 
+        margin: 16px auto; 
+        top: 16px; 
+        gap: 10px; 
+        border-radius: 25px;
+        width: calc(100% - 32px);
+    }
 
-/* For dark mode support */
-.dark-mode .content-box {
-    background-color: #1a1a1a;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
+    .navbar-container {
+        padding: 12px 0;
+    }
+    
+    .navbar-links { 
+        flex-direction: column; 
+        align-items: stretch; 
+    }
 
-.input {
-    background-color: white;
-    border-radius: 12px;
-    padding: 20px;
-    max-width: 800px;
-    width: 100%;
-    margin: 0 auto;  /* This centers the div horizontally */
-}
+    .navbar .nav-button { font-size: 12px; padding: 8px 10px; }
 
-/* Dark mode styles for input div */
-.dark-mode .input {
-    background-color: #1a1a1a;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
+    .clip-input-section, .video-info-display { margin-left: auto; margin-right: auto; padding: 12px; }
+    .main-video-link-textarea { font-size: 14px; }
 
-.text-field {
-    width: 100%;
-    padding: 12px 16px;
-    border: 1px solid #DADADA;
-    border-radius: 8px;
-    font-family: 'Manrope', sans-serif;
-    font-size: 16px;
-    background-color: #F3F1F0;
-    color: #333;
-    transition: all 0.3s ease;
-}
-
-.text-field:focus {
-    outline: none;
-    border-color: #DADADA;
-    box-shadow: 0 0 0 2px rgba(218, 218, 218, 0.1);
-}
-
-.text-field::placeholder {
-    color: #999;
-}
-
-/* Dark mode styles for text field */
-.dark-mode .text-field {
-    background-color: #2a2a2a;
-    border-color: #404040;
-    color: #fff;
-}
-
-.dark-mode .text-field::placeholder {
-    color: #666;
-}
-
-.dark-mode .text-field:focus {
-    border-color: #404040;
-    box-shadow: 0 0 0 2px rgba(64, 64, 64, 0.1);
+    .clip-controls .clip-mode-button {
+        font-size: 12px; 
+        padding: 6px 10px; 
+        gap: 3px;
+    }
+    .clip-controls .clip-mode-button .material-icons-outlined {
+        font-size: 16px; 
+    }
+     .dropdown-item { 
+        font-size: 12px;
+        padding: 6px 10px; 
+    }
+     .dropdown-item .material-icons-outlined {
+        font-size: 16px;
+    }
+    .controls-label { font-size: 12px; }
 }

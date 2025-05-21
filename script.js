@@ -1,5 +1,5 @@
-// YouTube API Key - IMPORTANT: REPLACE WITH YOUR ACTUAL API KEY
-const YOUTUBE_API_KEY = 'YOUR_YOUTUBE_API_KEY'; 
+// Backend API URL - Update this if your backend is hosted elsewhere
+const BACKEND_URL = 'http://localhost:5000';
 
 // DOM Elements for Theme Toggle
 const themeToggle = document.getElementById('themeToggle');
@@ -110,52 +110,73 @@ function extractVideoID(url) {
 }
 
 /**
- * Fetches video information from the YouTube Data API.
- * @param {string} videoId - The ID of the YouTube video.
+ * Fetches video information using our yt-dlp backend.
+ * @param {string} url - The YouTube video URL.
  */
-async function fetchYouTubeVideoInfo(videoId) {
-    if (YOUTUBE_API_KEY === 'YOUR_YOUTUBE_API_KEY') {
-        displayVideoError("YouTube API key is not configured. Please add your key to the script.");
+async function fetchVideoInfo(url) {
+    if (!url) {
+        displayVideoError("No URL provided");
         return;
     }
-    const apiUrl = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&key=${YOUTUBE_API_KEY}&part=snippet`;
+    
+    const centerPreview = document.querySelector('.centre');
+    if (centerPreview) {
+        centerPreview.style.display = 'none';
+    }
     
     if (videoInfoDisplay) {
         videoInfoDisplay.style.display = 'block';
-        videoInfoDisplay.innerHTML = `<p class="loading-message">Fetching video info...</p>`;
+        videoInfoDisplay.innerHTML = '<p class="loading-message">Fetching video info...</p>';
     }
 
     try {
-        const response = await fetch(apiUrl);
+        const response = await fetch(`${BACKEND_URL}/api/video-info`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ url })
+        });
+        
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error.message || `YouTube API error: ${response.status}`);
+            throw new Error(errorData.error || `Server error: ${response.status}`);
         }
+        
         const data = await response.json();
-        if (data.items && data.items.length > 0) {
-            displayVideoData(data.items[0].snippet);
-        } else {
-            displayVideoError("Video not found or no details available.");
-        }
+        displayVideoData(data);
+        
     } catch (error) {
-        console.error('Error fetching YouTube video info:', error);
+        console.error('Error fetching video info:', error);
         displayVideoError(`Failed to fetch video details: ${error.message}`);
     }
 }
 
 /**
- * Displays the fetched video data (thumbnail and title).
- * @param {object} snippet - The snippet object from the YouTube API response.
+ * Displays the fetched video data (thumbnail and title) in the center preview section.
+ * @param {object} videoData - The video data from our backend.
  */
-function displayVideoData(snippet) {
-    if (!videoInfoDisplay) return;
-    const title = snippet.title;
-    const thumbnailUrl = snippet.thumbnails.medium ? snippet.thumbnails.medium.url : (snippet.thumbnails.default ? snippet.thumbnails.default.url : '');
+function displayVideoData(videoData) {
+    const centerPreview = document.querySelector('.centre');
+    if (!centerPreview) return;
     
-    videoInfoDisplay.innerHTML = `
-        ${thumbnailUrl ? `<img src="${thumbnailUrl}" alt="Video Thumbnail">` : ''}
-        <h3>${title}</h3>
+    const title = videoData.title || 'No title available';
+    const thumbnailUrl = videoData.thumbnail || '';
+    
+    // Update the center preview with the video thumbnail and title
+    centerPreview.innerHTML = `
+        ${thumbnailUrl ? `<img class="video-thumbnail" src="${thumbnailUrl}" alt="${title}" title="${title}">` : ''}
+        <div class="video-title">${title}</div>
     `;
+    
+    // Show the preview section if it was hidden
+    centerPreview.style.display = 'block';
+    
+    // Also update the video info display if it exists
+    if (videoInfoDisplay) {
+        videoInfoDisplay.innerHTML = '';
+        videoInfoDisplay.style.display = 'none';
+    }
 }
 
 /**
@@ -163,9 +184,19 @@ function displayVideoData(snippet) {
  * @param {string} message - The error message to display.
  */
 function displayVideoError(message) {
-    if (!videoInfoDisplay) return;
-    videoInfoDisplay.style.display = 'block';
-    videoInfoDisplay.innerHTML = `<p class="error-message">${message}</p>`;
+    // Hide the center preview on error
+    const centerPreview = document.querySelector('.centre');
+    if (centerPreview) {
+        centerPreview.style.display = 'none';
+    }
+    
+    // Show error in the video info display area
+    if (videoInfoDisplay) {
+        videoInfoDisplay.style.display = 'block';
+        videoInfoDisplay.innerHTML = `<p class="error-message">${message}</p>`;
+    }
+    
+    console.error('Video Error:', message);
 }
 
 // --- Initialize Page ---
@@ -246,12 +277,23 @@ if(enterButton) {
     enterButton.addEventListener('click', () => {
         if (!enterButton.disabled && clipTextarea) {
             const url = clipTextarea.value.trim();
-            const videoId = extractVideoID(url);
-            if (videoId) {
-                fetchYouTubeVideoInfo(videoId);
-            } else {
-                displayVideoError("Invalid YouTube URL. Please enter a valid link.");
+            if (!url) {
+                displayVideoError("Please enter a YouTube URL.");
+                return;
             }
+            
+            // Use the URL directly with yt-dlp
+            fetchVideoInfo(url);
         }
     });
+    
+    // Also trigger on Enter key in the textarea
+    if (clipTextarea) {
+        clipTextarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                enterButton.click();
+            }
+        });
+    }
 }

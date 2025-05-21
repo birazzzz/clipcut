@@ -41,7 +41,7 @@
         </div>
     </nav>
 
-    <div class="video-preview">
+    <div class="centre">
         <img class="video-thumbnail" src="assets/thumbnail.jpg" alt="Video Thumbnail" title="Video Thumbnail">
         <div class="video-title">Video Title</div>
     </div>
@@ -50,37 +50,35 @@
         <div class="clip-input-container">
             <textarea id="clipTextarea" class="main-video-link-textarea" placeholder="Paste video link and tell us what to clip"></textarea>
             <div class="clip-controls">
-            <button id="fullClipButton" class="nav-button nav-button-outlined clip-mode-button">
-                <span class="material-icons-outlined">aspect_ratio</span>
-                <span>Full Clip</span>
-            </button>
-            <span class="controls-label">YouTube Only:</span>
-            <button id="promptButton" class="nav-button nav-button-outlined clip-mode-button"> 
-                <span class="material-icons-outlined">list_alt</span>
-                <span>Prompt</span>
-            </button>
-
-            <div class="clip-dropdown-container">
-                <button id="clipButton" class="nav-button nav-button-outlined clip-dropdown-button clip-mode-button" aria-haspopup="true" aria-expanded="false">
-                    <span class="clip-button-text-main">Clip</span><span class="clip-button-text-suffix"></span>
-                    <span class="material-icons-outlined">arrow_drop_down</span>
+                <button id="fullClipButton" class="nav-button nav-button-outlined clip-mode-button">
+                    <span class="material-icons-outlined">aspect_ratio</span>
+                    <span>Full Clip</span>
                 </button>
-                <div class="clip-dropdown-menu" role="menu">
-                    <button class="dropdown-item" role="menuitem" data-parent-button-id="clipButton" data-value="URL">
-                        <span class="material-icons-outlined">link</span>
-                        <span>Current Time URL</span>
+                <span class="controls-label">YouTube Only:</span>
+                <button id="promptButton" class="nav-button nav-button-outlined clip-mode-button"> 
+                    <span class="material-icons-outlined">list_alt</span>
+                    <span>Prompt</span>
+                </button>
+
+                <div class="clip-dropdown-container">
+                    <button id="clipButton" class="nav-button nav-button-outlined clip-dropdown-button clip-mode-button" aria-haspopup="true" aria-expanded="false">
+                        <span class="clip-button-text-main">Clip</span><span class="clip-button-text-suffix"></span>
+                        <span class="material-icons-outlined">arrow_drop_down</span>
                     </button>
-                    <button class="dropdown-item" role="menuitem" data-parent-button-id="clipButton" data-value="Time">
-                        <span class="material-icons-outlined">crop_square</span> 
-                        <span>Time Stamps</span>
-                    </button>
+                    <div class="clip-dropdown-menu" role="menu">
+                        <button class="dropdown-item" role="menuitem" data-parent-button-id="clipButton" data-value="URL">
+                            <span class="material-icons-outlined">link</span>
+                            <span>Current Time URL</span>
+                        </button>
+                        <button class="dropdown-item" role="menuitem" data-parent-button-id="clipButton" data-value="Time">
+                            <span class="material-icons-outlined">crop_square</span> 
+                            <span>Time Stamps</span>
+                        </button>
+                    </div>
                 </div>
-            </div>
-
-            <button id="enterButton" class="nav-button enter-button"> <span class="material-icons-outlined">subdirectory_arrow_left</span>
-                <span>Enter</span>
-            </button>
-
+                <button id="enterButton" class="nav-button enter-button clip-mode-button"> <span class="material-icons-outlined">subdirectory_arrow_left</span>
+                    <span>Enter</span>
+                </button>
             </div>
         </div>
     </section>

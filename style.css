@@ -276,7 +276,64 @@ body.dark-mode .theme-toggle-knob { transform: translateX(26px); }
 }
 .main-video-link-textarea::placeholder { color: var(--text-secondary, var(--text-secondary-light)); }
 
-.clip-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.clip-controls { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    flex: 1;
+}
+
+.enter-button {
+    margin-left: auto;
+    background-color: var(--nav-button-bg, var(--nav-button-bg-light));
+    color: var(--nav-button-text, var(--nav-button-text-light));
+    border: 1px solid var(--nav-button-outlined-border, var(--nav-button-outlined-border-light));
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.enter-button .material-icons-outlined {
+    color: inherit;
+    transition: color 0.2s ease;
+    font-size: 20px;
+}
+
+.enter-button:not(:disabled):not(.active):hover {
+    background-color: var(--nav-button-bg-hover, var(--nav-button-bg-hover-light));
+}
+
+.enter-button.active {
+    background-color: var(--nav-button-active-bg, var(--nav-button-active-bg-light));
+    color: var(--nav-button-active-text, var(--nav-button-active-text-light));
+    border-color: var(--nav-button-active-bg, var(--nav-button-active-bg-light));
+}
+
+.enter-button.active .material-icons-outlined {
+    color: inherit;
+}
+
+.enter-button:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.enter-button:disabled {
+    background-color: var(--button-disabled-bg, var(--button-disabled-bg-light));
+    color: var(--button-disabled-text, var(--button-disabled-text-light));
+    cursor: not-allowed;
+    border-color: transparent;
+}
+
+.enter-button-container {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
 .controls-label {
     font-size: 14px; color: var(--text-secondary, var(--text-secondary-light));
     margin-right: 4px; transition: color 0.3s ease;
@@ -385,7 +442,7 @@ body.dark-mode .dropdown-item:hover:not(:disabled) {
      color: var(--text-secondary, var(--text-secondary-light));
 }
 
-.video-preview {
+.centre {
     background: var(--card-bg, var(--card-bg-light));
     border-radius: 16px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);

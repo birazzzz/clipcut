@@ -72,9 +72,16 @@
 body {
     font-family: 'Manrope', sans-serif;
     background-color: var(--page-bg, var(--page-bg-light));
-    transition: background-color 0.3s ease;
+    background-image: url('assets/Light.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: background-color 0.3s ease, background-image 0.3s ease;
     padding: 1px; 
     color: var(--text-color, var(--text-color-light));
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 body.dark-mode {
@@ -90,6 +97,7 @@ body.dark-mode {
     --nav-button-bg: var(--nav-button-bg-dark);
     --nav-button-text: var(--nav-button-text-dark);
     --nav-button-bg-hover: var(--nav-button-bg-hover-dark);
+    background-image: url('assets/Dark.png');
     
     --nav-button-active-bg: var(--nav-button-active-bg-dark);
     --nav-button-active-text: var(--nav-button-active-text-dark);
@@ -111,7 +119,7 @@ body.dark-mode {
 
 .navbar {
     display: flex; justify-content: space-between; align-items: center;
-    position: sticky; margin: 32px auto; top: 32px; z-index: 1000;
+    position: sticky; margin: 24px auto; top: 24px; z-index: 1000;
     height: 66px; padding: 0 40px; border-radius: 100px; 
     background-color: var(--navbar-bg, var(--navbar-bg-light));
     box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
@@ -230,13 +238,17 @@ body.dark-mode {
 }
 body.dark-mode .theme-toggle-knob { transform: translateX(26px); }
 
-.clip-input-section {
+.input {
     background-color: var(--card-bg, var(--card-bg-light));
-    padding: 24px; margin: 0 auto 32px auto; 
+    padding: 24px; 
+    margin: auto 0 24px auto; 
     border-radius: 24px; 
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     transition: background-color 0.3s ease;
     max-width: 800px;
+    width: calc(100% - 64px);
+    margin-left: auto;
+    margin-right: auto;
 }
 .main-video-link-textarea { 
     width: 100%;

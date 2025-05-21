@@ -1,5 +1,5 @@
 // Backend API URL - Update this if your backend is hosted elsewhere
-const BACKEND_URL = 'http://localhost:5000';
+const BACKEND_URL = 'http://localhost:8000';
 
 // DOM Elements for Theme Toggle
 const themeToggle = document.getElementById('themeToggle');
@@ -124,10 +124,27 @@ async function fetchVideoInfo(url) {
         centerPreview.style.display = 'none';
     }
     
+    // Hide any previous error messages
     if (videoInfoDisplay) {
-        videoInfoDisplay.style.display = 'block';
-        videoInfoDisplay.innerHTML = '<p class="loading-message">Fetching video info...</p>';
+        videoInfoDisplay.style.display = 'none';
     }
+    
+    // Save original button text and set loading state
+    const enterButton = document.getElementById('enterButton');
+    const originalButtonHTML = enterButton.innerHTML;
+    enterButton.innerHTML = '<span class="loading-text">Loading</span>';
+    enterButton.disabled = true;
+    
+    // Start the ellipsis animation
+    const loadingText = enterButton.querySelector('.loading-text');
+    let dots = 0;
+    const loadingInterval = setInterval(() => {
+        dots = (dots + 1) % 4;
+        loadingText.textContent = 'Loading' + '.'.repeat(dots);
+    }, 500);
+    
+    // Store the interval ID on the button so we can clear it later
+    enterButton._loadingInterval = loadingInterval;
 
     try {
         const response = await fetch(`${BACKEND_URL}/api/video-info`, {
@@ -149,6 +166,14 @@ async function fetchVideoInfo(url) {
     } catch (error) {
         console.error('Error fetching video info:', error);
         displayVideoError(`Failed to fetch video details: ${error.message}`);
+    } finally {
+        // Restore original button state and clear interval
+        if (enterButton) {
+            clearInterval(enterButton._loadingInterval);
+            enterButton.innerHTML = originalButtonHTML;
+            enterButton.disabled = false;
+            delete enterButton._loadingInterval;
+        }
     }
 }
 

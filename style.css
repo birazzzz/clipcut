@@ -462,7 +462,7 @@ body.dark-mode .dropdown-item:hover:not(:disabled) {
 }
 
 .video-title {
-    font-size: 12.6px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--text-color, var(--text-color-light));
     margin-left: 3px;
@@ -486,6 +486,12 @@ body.dark-mode .dropdown-item:hover:not(:disabled) {
 
 .download-button .material-symbols-rounded {
     color: inherit !important;
+}
+
+/* Loading text animation */
+.loading-text {
+    display: inline-block;
+    min-width: 4.5em; /* Keep width consistent to prevent button resizing */
 }
 
 .enter-button .material-symbols-rounded {

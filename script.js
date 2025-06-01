@@ -1,5 +1,5 @@
 // Backend API URL - Update this if your backend is hosted elsewhere
-const BACKEND_URL = 'http://localhost:8000';
+const BACKEND_URL = 'http://localhost:8001';
 
 // DOM Elements for Theme Toggle
 const themeToggle = document.getElementById('themeToggle');
@@ -178,23 +178,76 @@ async function fetchVideoInfo(url) {
 }
 
 /**
+ * Formats the duration in seconds to HH:MM:SS or MM:SS format
+ * @param {number} seconds - Duration in seconds
+ * @returns {string} Formatted duration string
+ */
+function formatDuration(seconds) {
+    if (!seconds) return '';
+    
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor(seconds % 3600 / 60);
+    const s = Math.floor(seconds % 60);
+    
+    return h > 0 
+        ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+        : `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+/**
  * Displays the fetched video data (thumbnail and title) in the center preview section.
  * @param {object} videoData - The video data from our backend.
  */
 function displayVideoData(videoData) {
     const centerPreview = document.querySelector('.centre');
-    if (!centerPreview) return;
+    const videoContainer = document.querySelector('.video-preview-container');
+    if (!centerPreview || !videoContainer) return;
+    
+    // Add a class to indicate video is loaded
+    videoContainer.classList.add('has-video');
     
     const title = videoData.title || 'No title available';
-    const thumbnailUrl = videoData.thumbnail || '';
+    let thumbnailUrl = videoData.thumbnail || '';
+    const isTwitter = videoData.platform === 'twitter';
+    const videoId = extractVideoID(videoData.webpage_url || '');
     
-    // Update the center preview with the video thumbnail and title
-    centerPreview.innerHTML = `
-        ${thumbnailUrl ? `<img class="video-thumbnail" src="${thumbnailUrl}" alt="${title}" title="${title}">` : ''}
-        <div class="video-title">${title}</div>
+    // For Twitter, sometimes we need to use a different thumbnail URL format
+    if (isTwitter && thumbnailUrl) {
+        // Try to get a higher resolution thumbnail if available
+        thumbnailUrl = thumbnailUrl.replace('&name=small', '&name=large');
+    }
+    
+    // Format duration if available
+    const duration = videoData.duration ? formatDuration(videoData.duration) : '';
+    
+    // Create the video info HTML
+    let videoInfoHTML = `
+        <div class="video-preview-container">
+            ${thumbnailUrl ? `
+                <div class="thumbnail-container" ${videoData.platform === 'youtube' ? 'data-video-id="' + videoId + '" onclick="embedYouTubeVideo(this, event)"' : ''}>
+                    <img class="video-thumbnail" src="${thumbnailUrl}" alt="${title}" title="${title}" onerror="this.onerror=null; this.style.display='none';">
+                    ${videoData.platform === 'youtube' ? `
+                        <div class="play-button-overlay">
+                            <div class="play-button">
+                                <span class="material-icons-outlined">play_arrow</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                    <div class="thumbnail-overlay">
+                        ${duration ? `<div class="video-duration">${duration}</div>` : ''}
+                        ${videoData.platform === 'youtube' ? `<div class="video-platform">YouTube</div>` : ''}
+                    </div>
+                </div>` 
+            : ''}
+            <div class="video-info">
+                <div class="video-title">${title}</div>
+                ${videoData.platform === 'twitter' ? `<div class="video-platform">Twitter</div>` : ''}
+            </div>
+        </div>
     `;
     
-    // Show the preview section if it was hidden
+    // Update the center preview
+    centerPreview.innerHTML = videoInfoHTML;
     centerPreview.style.display = 'block';
     
     // Also update the video info display if it exists
@@ -205,15 +258,30 @@ function displayVideoData(videoData) {
 }
 
 /**
+ * Clears the video preview and hides the download button
+ */
+function clearVideoPreview() {
+    const centerPreview = document.querySelector('.centre');
+    const videoContainer = document.querySelector('.video-preview-container');
+    const downloadButton = document.getElementById('downloadButton');
+    if (centerPreview) {
+        centerPreview.innerHTML = '';
+    }
+    if (videoContainer) {
+        videoContainer.classList.remove('has-video');
+    }
+    if (downloadButton) {
+        downloadButton.style.display = 'none';
+    }
+}
+
+/**
  * Displays an error message in the video info area.
  * @param {string} message - The error message to display.
  */
 function displayVideoError(message) {
-    // Hide the center preview on error
-    const centerPreview = document.querySelector('.centre');
-    if (centerPreview) {
-        centerPreview.style.display = 'none';
-    }
+    // Hide the center preview and download button
+    clearVideoPreview();
     
     // Show error in the video info display area
     if (videoInfoDisplay) {
@@ -222,6 +290,36 @@ function displayVideoError(message) {
     }
     
     console.error('Video Error:', message);
+}
+
+/**
+ * Embeds a YouTube video when the thumbnail is clicked
+ * @param {HTMLElement} element - The clicked element
+ * @param {Event} event - The click event
+ */
+function embedYouTubeVideo(element, event) {
+    // Prevent the click from bubbling up to parent elements
+    event.stopPropagation();
+    
+    const videoId = element.getAttribute('data-video-id');
+    if (!videoId) return;
+    
+    // Create the YouTube iframe
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('width', '100%');
+    iframe.setAttribute('height', '100%');
+    iframe.setAttribute('src', `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&showinfo=0`);
+    iframe.setAttribute('frameborder', '0');
+    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+    iframe.setAttribute('allowfullscreen', '');
+    
+    // Replace the thumbnail with the iframe
+    element.innerHTML = '';
+    element.appendChild(iframe);
+    element.classList.add('video-embedded');
+    
+    // Remove the click handler to prevent re-embedding
+    element.onclick = null;
 }
 
 // --- Initialize Page ---
@@ -296,6 +394,105 @@ if(clipTextarea) {
     clipTextarea.addEventListener('input', toggleEnterButtonState);
     toggleEnterButtonState(); // Set initial state
 }
+
+// Add download button click handler
+document.addEventListener('DOMContentLoaded', () => {
+    const downloadButton = document.getElementById('downloadButton');
+    if (downloadButton) {
+        downloadButton.addEventListener('click', async () => {
+            if (!currentVideoUrl) {
+                console.error('No video URL available for download');
+                return;
+            }
+
+            try {
+                // Show loading state
+                downloadButton.disabled = true;
+                const originalText = downloadButton.innerHTML;
+                downloadButton.innerHTML = '<span class="material-symbols-rounded">hourglass_empty</span><span>Downloading...</span>';
+                
+                // Call our backend to download the video
+                const response = await fetch('http://localhost:3001/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ videoUrl: currentVideoUrl }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to download video');
+                }
+
+                // Get the filename from the Content-Disposition header or generate one
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'video.mp4';
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="?([^";]+)"?/);
+                    if (filenameMatch && filenameMatch[1]) {
+                        filename = filenameMatch[1];
+                    }
+                }
+
+                // Create a blob from the response and trigger download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+            } catch (error) {
+                console.error('Download error:', error);
+                alert(`Download failed: ${error.message}`);
+            } finally {
+                // Reset button state
+                downloadButton.disabled = false;
+                downloadButton.innerHTML = '<span class="material-symbols-rounded">download</span><span>Download</span>';
+            }
+        });
+    }
+
+    // Textarea input handling
+    if (clipTextarea) {
+        // Handle paste event for auto-submission
+        clipTextarea.addEventListener('paste', (e) => {
+            // Let the paste complete
+            setTimeout(() => {
+                const text = clipTextarea.value.trim();
+                if (text) {
+                    const videoId = extractVideoID(text);
+                    if (videoId) {
+                        fetchVideoInfo(text);
+                    }
+                }
+            }, 10);
+        });
+
+        // Handle Enter key press
+        clipTextarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const text = clipTextarea.value.trim();
+                if (text) {
+                    const videoId = extractVideoID(text);
+                    if (videoId) {
+                        fetchVideoInfo(text);
+                    }
+                }
+            }
+        });
+
+        // Update Enter button state based on textarea content
+        clipTextarea.addEventListener('input', toggleEnterButtonState);
+    }
+});
 
 // Add listener to Enter button for YouTube API call
 if(enterButton) {

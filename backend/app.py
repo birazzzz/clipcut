@@ -1,7 +1,9 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import yt_dlp
 import os
+import tempfile
+import uuid
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -248,6 +250,65 @@ def get_video_info():
             
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/download', methods=['POST'])
+def download_video():
+    data = request.get_json()
+    url = data.get('url')
+    
+    if not url:
+        return jsonify({'error': 'No URL provided'}), 400
+    
+    print(f"\n=== Processing download for URL: {url} ===")
+    
+    # Normalize Twitter/X URLs
+    if 'x.com' in url or 'twitter.com' in url:
+        url = url.replace('x.com', 'twitter.com')
+    
+    try:
+        # Create a temporary directory for downloads
+        temp_dir = os.path.join(tempfile.gettempdir(), 'clipcut_downloads')
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        # Configure yt-dlp for downloading best quality up to 480p with audio
+        download_opts = {
+            **ydl_opts,
+            'format': 'best[height<=480][ext=mp4]',
+            'merge_output_format': 'mp4',
+            'outtmpl': os.path.join(temp_dir, f'%(id)s.%(ext)s'),
+            'noprogress': True,
+        }
+        
+        with yt_dlp.YoutubeDL(download_opts) as ydl:
+            # Get info first to set filename
+            info = ydl.extract_info(url, download=False)
+            if not info:
+                return jsonify({'error': 'Could not retrieve video information'}), 400
+                
+            # Download the video
+            ydl.download([url])
+            
+            # Get the actual filename
+            filename = ydl.prepare_filename(info)
+            
+            # Return the file for download
+            return send_file(
+                filename,
+                as_attachment=True,
+                download_name=f"{info.get('title', 'video')}.mp4",
+                mimetype='video/mp4'
+            )
+            
+    except Exception as e:
+        print(f"Download error: {str(e)}")
+        return jsonify({'error': f'Failed to download video: {str(e)}'}), 500
+    finally:
+        # Clean up the downloaded file after sending
+        try:
+            if 'filename' in locals() and os.path.exists(filename):
+                os.remove(filename)
+        except Exception as e:
+            print(f"Error cleaning up file {filename}: {str(e)}")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8001))

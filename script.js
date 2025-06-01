@@ -201,7 +201,17 @@ function formatDuration(seconds) {
 function displayVideoData(videoData) {
     const centerPreview = document.querySelector('.centre');
     const videoContainer = document.querySelector('.video-preview-container');
+    const downloadButton = document.getElementById('downloadButton');
+    
     if (!centerPreview || !videoContainer) return;
+    
+    // Store the current video URL for download
+    window.currentVideoUrl = videoData.webpage_url || '';
+    
+    // Show the download button
+    if (downloadButton) {
+        downloadButton.style.display = 'flex';
+    }
     
     // Add a class to indicate video is loaded
     videoContainer.classList.add('has-video');
@@ -222,27 +232,25 @@ function displayVideoData(videoData) {
     
     // Create the video info HTML
     let videoInfoHTML = `
-        <div class="video-preview-container">
-            ${thumbnailUrl ? `
-                <div class="thumbnail-container" ${videoData.platform === 'youtube' ? 'data-video-id="' + videoId + '" onclick="embedYouTubeVideo(this, event)"' : ''}>
-                    <img class="video-thumbnail" src="${thumbnailUrl}" alt="${title}" title="${title}" onerror="this.onerror=null; this.style.display='none';">
-                    ${videoData.platform === 'youtube' ? `
-                        <div class="play-button-overlay">
-                            <div class="play-button">
-                                <span class="material-icons-outlined">play_arrow</span>
-                            </div>
+        ${thumbnailUrl ? `
+            <div class="thumbnail-container" ${videoData.platform === 'youtube' ? 'data-video-id="' + videoId + '" onclick="embedYouTubeVideo(this, event)"' : ''}>
+                <img class="video-thumbnail" src="${thumbnailUrl}" alt="${title}" title="${title}" onerror="this.onerror=null; this.style.display='none';">
+                ${videoData.platform === 'youtube' ? `
+                    <div class="play-button-overlay">
+                        <div class="play-button">
+                            <span class="material-icons-outlined">play_arrow</span>
                         </div>
-                    ` : ''}
-                    <div class="thumbnail-overlay">
-                        ${duration ? `<div class="video-duration">${duration}</div>` : ''}
-                        ${videoData.platform === 'youtube' ? `<div class="video-platform">YouTube</div>` : ''}
                     </div>
-                </div>` 
-            : ''}
-            <div class="video-info">
-                <div class="video-title">${title}</div>
-                ${videoData.platform === 'twitter' ? `<div class="video-platform">Twitter</div>` : ''}
-            </div>
+                ` : ''}
+                <div class="thumbnail-overlay">
+                    ${duration ? `<div class="video-duration">${duration}</div>` : ''}
+                    ${videoData.platform === 'youtube' ? `<div class="video-platform">YouTube</div>` : ''}
+                </div>
+            </div>` 
+        : ''}
+        <div class="video-info">
+            <div class="video-title">${title}</div>
+            ${videoData.platform === 'twitter' ? `<div class="video-platform">Twitter</div>` : ''}
         </div>
     `;
     
@@ -260,19 +268,30 @@ function displayVideoData(videoData) {
 /**
  * Clears the video preview and hides the download button
  */
+/**
+ * Clears the video preview and hides the download button
+ */
 function clearVideoPreview() {
     const centerPreview = document.querySelector('.centre');
     const videoContainer = document.querySelector('.video-preview-container');
     const downloadButton = document.getElementById('downloadButton');
+    
     if (centerPreview) {
         centerPreview.innerHTML = '';
+        centerPreview.style.display = 'none';
     }
+    
     if (videoContainer) {
         videoContainer.classList.remove('has-video');
     }
+    
+    // Hide the download button
     if (downloadButton) {
         downloadButton.style.display = 'none';
     }
+    
+    // Clear the current video URL
+    window.currentVideoUrl = '';
 }
 
 /**
@@ -395,69 +414,75 @@ if(clipTextarea) {
     toggleEnterButtonState(); // Set initial state
 }
 
-// Add download button click handler
-document.addEventListener('DOMContentLoaded', () => {
+// Handle download button click
+async function handleDownload() {
     const downloadButton = document.getElementById('downloadButton');
-    if (downloadButton) {
-        downloadButton.addEventListener('click', async () => {
-            if (!currentVideoUrl) {
-                console.error('No video URL available for download');
-                return;
-            }
+    if (!downloadButton || !window.currentVideoUrl) return;
 
-            try {
-                // Show loading state
-                downloadButton.disabled = true;
-                const originalText = downloadButton.innerHTML;
-                downloadButton.innerHTML = '<span class="material-symbols-rounded">hourglass_empty</span><span>Downloading...</span>';
-                
-                // Call our backend to download the video
-                const response = await fetch('http://localhost:3001/download', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ videoUrl: currentVideoUrl }),
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Failed to download video');
-                }
-
-                // Get the filename from the Content-Disposition header or generate one
-                const contentDisposition = response.headers.get('Content-Disposition');
-                let filename = 'video.mp4';
-                if (contentDisposition) {
-                    const filenameMatch = contentDisposition.match(/filename="?([^";]+)"?/);
-                    if (filenameMatch && filenameMatch[1]) {
-                        filename = filenameMatch[1];
-                    }
-                }
-
-                // Create a blob from the response and trigger download
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                
-                // Cleanup
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-                
-            } catch (error) {
-                console.error('Download error:', error);
-                alert(`Download failed: ${error.message}`);
-            } finally {
-                // Reset button state
-                downloadButton.disabled = false;
-                downloadButton.innerHTML = '<span class="material-symbols-rounded">download</span><span>Download</span>';
-            }
+    const originalHTML = downloadButton.innerHTML;
+    
+    try {
+        // Show loading state
+        downloadButton.disabled = true;
+        downloadButton.innerHTML = '<span class="material-symbols-rounded spin">hourglass_empty</span><span>Preparing</span>';
+        
+        // Call our backend to download the video
+        const response = await fetch(`${BACKEND_URL}/api/download`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ url: window.currentVideoUrl }),
         });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to download video');
+        }
+
+        // Get the filename from the Content-Disposition header or use a default
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'video.mp4';
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="?([^";]+)"?/);
+            if (filenameMatch && filenameMatch[1]) {
+                filename = filenameMatch[1];
+            }
+        }
+
+        // Create a blob from the response and trigger download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        
+        // Cleanup
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+    } catch (error) {
+        console.error('Download error:', error);
+        alert(`Download failed: ${error.message}`);
+    } finally {
+        // Reset button state
+        if (downloadButton) {
+            downloadButton.disabled = false;
+            downloadButton.innerHTML = originalHTML;
+        }
     }
+}
+
+// Add event delegation for dynamically created download button
+document.addEventListener('click', (event) => {
+    if (event.target.closest('#downloadButton')) {
+        handleDownload();
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
 
     // Textarea input handling
     if (clipTextarea) {

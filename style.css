@@ -263,6 +263,7 @@ body.dark-mode .theme-toggle-knob { transform: translateX(26px); }
     height: 64px; /* Increased height for 2 lines */
     line-height: 24px; /* Line height for better readability */
     padding: 8px 16px;
+    margin-bottom: 16px;
     border: 1px solid var(--input-border, var(--input-border-light));
     border-radius: 12px;
     font-family: 'Manrope', sans-serif;
@@ -271,31 +272,45 @@ body.dark-mode .theme-toggle-knob { transform: translateX(26px); }
     background-color: var(--input-bg, var(--input-bg-light)); 
     resize: none; /* Disable manual resizing */
     overflow-y: auto; /* Enable vertical scrolling */
-    margin-bottom: 16px; 
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    outline: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
-.main-video-link-textarea::placeholder { color: var(--text-secondary, var(--text-secondary-light)); }
+
+.main-video-link-textarea:focus {
+    border-color: var(--primary-color, var(--primary-color-light));
+    box-shadow: 0 0 0 2px rgba(33, 155, 217, 0.2);
+}
+
+.main-video-link-textarea::placeholder { 
+    color: var(--text-secondary, var(--text-secondary-light)); 
+}
 
 .clip-controls { 
     display: flex; 
     align-items: center; 
     gap: 12px; 
-    flex: 1;
+    width: 100%;
+    justify-content: space-between;
 }
 
 .enter-button {
-    margin-left: auto;
-    background-color: var(--nav-button-bg, var(--nav-button-bg-light));
-    color: var(--nav-button-text, var(--nav-button-text-light));
-    border: 1px solid var(--nav-button-outlined-border, var(--nav-button-outlined-border-light));
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-    padding: 8px 16px;
-    border-radius: 12px;
-    font-weight: 600;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
+    padding: 8px 12px; /* 8px top/bottom, 12px left/right */
+    border: 1px solid transparent;
+    border-radius: 12px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
+    background-color: var(--nav-button-bg, var(--nav-button-bg-light));
+    color: var(--nav-button-text, var(--nav-button-text-light));
+    white-space: nowrap;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, opacity 0.3s ease;
+    margin-left: auto;
 }
 
 .enter-button .material-icons-outlined {
@@ -447,9 +462,9 @@ body.dark-mode .dropdown-item:hover:not(:disabled) {
     border-radius: 16px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     width: 348px;
-    min-height: 236px;
+    min-height: auto;
     margin: auto;
-    padding: 16px;
+    padding: 16px 16px 16px 16px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -476,7 +491,7 @@ body.dark-mode .dropdown-item:hover:not(:disabled) {
 }
 
 .video-preview-container > .centre {
-    margin-bottom: 16px;
+    margin: 0;
 }
 
 /* Hide download button by default */
@@ -486,139 +501,23 @@ body.dark-mode .dropdown-item:hover:not(:disabled) {
 
 /* Show download button when video is loaded */
 .video-preview-container.has-video .download-button {
-    display: flex;
+display: flex;
 }
 
-.video-preview-container > .centre {
-    margin: 0;
-    width: 100%;
+.video-preview-container > .video-info {
+padding: 0;
+width: 100%;
+margin-top: 12px;
 }
 
 .video-preview-container > .download-button {
-    margin: 0;
-    width: 100%;
+margin: 0;
+width: 100%;
 }
 
-.thumbnail-container {
-    position: relative;
-    width: 317px;
-    height: 177px;
-    border-radius: 12px;
-    overflow: hidden;
-    margin: 0 0 12px 0;
-    background-color: var(--card-bg, var(--card-bg-light));
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
-    transition: transform 0.2s ease;
-}
-
-.thumbnail-container:hover {
-    transform: scale(1.02);
-}
-
-.thumbnail-container.video-embedded {
-    background-color: #000;
-}
-
-.play-button-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: rgba(0, 0, 0, 0.3);
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.thumbnail-container:hover .play-button-overlay {
-    opacity: 1;
-}
-
-.play-button {
-    width: 60px;
-    height: 42px;
-    background-color: rgba(255, 0, 0, 0.9);
-    border-radius: 8px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: transform 0.2s ease, background-color 0.2s ease;
-}
-
-.play-button .material-icons-outlined {
-    font-size: 36px;
-    color: white;
-    margin-left: 5px;
-}
-
-.thumbnail-container:hover .play-button {
-    transform: scale(1.1);
-    background-color: #ff0000;
-}
-
-.video-embedded iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-    border-radius: 12px;
-}
-
-.video-thumbnail {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.3s ease;
-}
-
-.thumbnail-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 8px;
-    background: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 30%, rgba(0,0,0,0) 50%);
-}
-
-.video-duration {
-    align-self: flex-end;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 3px 6px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-    margin: 4px;
-}
-
-.video-platform {
-    align-self: flex-start;
-    font-size: 10px;
-    font-weight: 600;
-    color: white;
-    background-color: rgba(255, 0, 0, 0.9);
-    padding: 2px 6px;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.video-info {
-    padding: 0 4px;
-}
-
-/* Video title styles */
 .video-title {
     margin: 0;
-    padding: 0 4px;
+    padding: 0;
     font-size: 14px;
     font-weight: 500;
     color: var(--text-color, var(--text-color-light));
@@ -629,9 +528,201 @@ body.dark-mode .dropdown-item:hover:not(:disabled) {
     white-space: nowrap;
 }
 
-/* Hover effects */
+.thumbnail-container {
+position: relative;
+width: 317px;
+height: 177px;
+border-radius: 12px;
+overflow: hidden;
+margin: 0;
+background-color: var(--card-bg, var(--card-bg-light));
+box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+cursor: pointer;
+transition: transform 0.2s ease;
+}
+
+/* Thumbnail container hover state is handled by child elements */
+
+.thumbnail-container.video-embedded {
+background-color: #000;
+}
+
+.play-button-overlay {
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+display: flex;
+justify-content: center;
+align-items: center;
+background-color: rgba(0, 0, 0, 0.6);
+opacity: 0;
+transition: opacity 0.2s ease;
+}
+
+.thumbnail-container:hover .play-button-overlay {
+opacity: 1;
+}
+
+.play-button {
+    width: 56px;
+    height: 56px;
+    background-color: rgba(255, 0, 0, 0.9);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.play-button .material-icons-outlined {
+    font-size: 36px;
+    color: white;
+    font-variation-settings: 'FILL' 1;
+    margin-left: 4px; /* Small adjustment for centering the play icon */
+}
+
+.thumbnail-container:hover .play-button {
+    background-color: #ff0000;
+}
+
+.video-embedded iframe {
+width: 100%;
+height: 100%;
+border: none;
+border-radius: 12px;
+}
+
+.video-thumbnail {
+width: 100%;
+height: 100%;
+object-fit: cover;
+display: block;
+transition: transform 0.3s ease;
+}
+
+.thumbnail-overlay {
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+display: flex;
+flex-direction: column;
+justify-content: space-between;
+padding: 8px;
+background: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 30%, rgba(0,0,0,0) 50%);
+}
+
+.video-duration {
+align-self: flex-end;
+background-color: rgba(0, 0, 0, 0.8);
+color: white;
+padding: 3px 6px;
+border-radius: 4px;
+font-size: 12px;
+font-weight: 500;
+margin: 4px;
+}
+
+.video-platform {
+align-self: flex-start;
+font-size: 10px;
+font-weight: 600;
+color: white;
+background-color: rgba(255, 0, 0, 0.9);
+padding: 2px 6px;
+border-radius: 4px;
+text-transform: uppercase;
+letter-spacing: 0.5px;
+}
+
+.video-info {
+    padding: 0 4px;
+    margin-top: 12px;
+    width: 100%;
+}
+
+/* Video title styles */
+/* Download button styles */
+.download-button {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 8px;
+margin: 12px auto 0;
+padding: 8px 16px;
+background-color: var(--primary-color-light);
+color: white;
+border: none;
+border-radius: 6px;
+font-size: 14px;
+font-weight: 500;
+cursor: pointer;
+transition: background-color 0.2s, transform 0.1s;
+width: fit-content;
+}
+
+/* Spin animation for loading state */
+@keyframes spin {
+0% { transform: rotate(0deg); }
+100% { transform: rotate(360deg); }
+}
+
+.download-button .spin {
+animation: spin 1.5s linear infinite;
+display: inline-block;
+}
+
+.download-button:hover {
+background-color: #1a8bc9;
+}
+
+.download-button:active {
+transform: scale(0.98);
+}
+
+.download-button:disabled {
+background-color: var(--button-disabled-bg-light);
+color: var(--button-disabled-text-light);
+cursor: not-allowed;
+transform: none;
+}
+
+/* Dark mode styles */
+body.dark-mode .download-button {
+background-color: var(--primary-color-dark);
+}
+
+body.dark-mode .download-button:hover {
+background-color: #1e8bc4;
+}
+
+body.dark-mode .download-button:disabled {
+background-color: var(--button-disabled-bg-dark);
+color: var(--button-disabled-text-dark);
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Thumbnail hover effect */
+.thumbnail-container {
+    position: relative;
+    overflow: hidden;
+}
+
 .thumbnail-container:hover .video-thumbnail {
-    transform: scale(1.02);
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.thumbnail-container:hover .play-button-overlay {
+    opacity: 1;
+    transition: opacity 0.2s ease;
 }
 
 /* Dark mode adjustments */
@@ -692,7 +783,7 @@ body.dark-mode .thumbnail-container {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 0 20px;
+    /* Not sure what this padding is for, removing it for now */
     background-color: var(--nav-button-active-bg, var(--nav-button-active-bg-light));
     color: var(--nav-button-active-text, var(--nav-button-active-text-light));
     border: none;

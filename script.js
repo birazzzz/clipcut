@@ -147,6 +147,7 @@ async function fetchVideoInfo(url) {
     enterButton._loadingInterval = loadingInterval;
 
     try {
+        console.log('Fetching video info for URL:', url);
         const response = await fetch(`${BACKEND_URL}/api/video-info`, {
             method: 'POST',
             headers: {
@@ -206,11 +207,19 @@ function displayVideoData(videoData) {
     if (!centerPreview || !videoContainer) return;
     
     // Store the current video URL for download
-    window.currentVideoUrl = videoData.webpage_url || '';
+    window.currentVideoUrl = videoData.url || videoData.webpage_url || '';
+    console.log('Setting currentVideoUrl to:', window.currentVideoUrl);
+    console.log('Full videoData:', videoData);
     
-    // Show the download button
+    // Show and enable the download button
     if (downloadButton) {
         downloadButton.style.display = 'flex';
+        downloadButton.style.visibility = 'visible';
+        downloadButton.style.opacity = '1';
+        downloadButton.disabled = false;
+        console.log('Download button shown and enabled');
+    } else {
+        console.error('Download button element not found when trying to display video');
     }
     
     // Add a class to indicate video is loaded
@@ -416,47 +425,65 @@ if(clipTextarea) {
 
 // Handle download button click
 async function handleDownload() {
+    console.log('Download button clicked');
     const downloadButton = document.getElementById('downloadButton');
-    if (!downloadButton || !window.currentVideoUrl) return;
-
+    
+    if (!downloadButton) {
+        console.error('Download button not found');
+        return;
+    }
+    
+    if (!window.currentVideoUrl) {
+        console.error('No video URL set');
+        alert('Please enter a video URL first');
+        return;
+    }
+    
+    console.log('Current video URL:', window.currentVideoUrl);
+    
+    // Show loading state
     const originalHTML = downloadButton.innerHTML;
+    downloadButton.disabled = true;
+    downloadButton.innerHTML = '<span class="material-symbols-rounded spin">hourglass_empty</span> Preparing...';
     
     try {
-        // Show loading state with animation
-        downloadButton.disabled = true;
-        downloadButton.classList.add('downloading');
-        downloadButton.innerHTML = `
-            <span class="material-symbols-rounded spin">hourglass_empty</span>
-            <span class="button-text">Preparing...</span>
-        `;
+        // Show preparing state
+        downloadButton.innerHTML = '<span class="material-symbols-rounded spin">hourglass_empty</span> Preparing download...';
         
-        // Show progress container if it exists
-        const progressContainer = document.querySelector('.download-progress');
-        if (progressContainer) {
-            progressContainer.style.display = 'block';
-            const progressBar = progressContainer.querySelector('.progress-bar');
-            if (progressBar) {
-                progressBar.style.width = '0%';
-                progressBar.textContent = '0%';
-            }
-        }
-        
-        // Call our backend to download the video
+        // Start the download
         const response = await fetch(`${BACKEND_URL}/download`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ url: window.currentVideoUrl }),
+            body: JSON.stringify({ url: window.currentVideoUrl })
         });
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || 'Failed to download video');
+            let errorData;
+            try {
+                errorData = await response.json();
+            } catch (e) {
+                console.error('Error parsing error response:', e);
+                throw new Error(`Server error: ${response.status} ${response.statusText}`);
+            }
+            
+            console.error('Download error response:', errorData);
+            
+            // Format a more detailed error message
+            let errorMessage = errorData.message || errorData.error || 'Download failed';
+            if (errorData.details) {
+                errorMessage += `\n\nDetails: ${errorData.details}`;
+            }
+            if (errorData.exitCode) {
+                errorMessage += `\nExit code: ${errorData.exitCode}`;
+            }
+            
+            throw new Error(errorMessage);
         }
 
-        // Get the filename from the Content-Disposition header or use a default
-        const contentDisposition = response.headers.get('Content-Disposition');
+        // Get the filename from the content-disposition header or generate one
+        const contentDisposition = response.headers.get('content-disposition');
         let filename = 'video.mp4';
         if (contentDisposition) {
             const filenameMatch = contentDisposition.match(/filename="?([^";]+)"?/);
@@ -465,8 +492,10 @@ async function handleDownload() {
             }
         }
 
-        // Create a blob from the response and trigger download
+        // Create a blob from the response
         const blob = await response.blob();
+        
+        // Create a download link and trigger it
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -481,40 +510,32 @@ async function handleDownload() {
     } catch (error) {
         console.error('Download error:', error);
         
-        // Show error message in the UI
-        const errorDisplay = document.getElementById('errorDisplay');
-        if (errorDisplay) {
-            errorDisplay.textContent = `Download failed: ${error.message}`;
-            errorDisplay.style.display = 'block';
-            
-            // Hide error after 5 seconds
-            setTimeout(() => {
-                errorDisplay.style.display = 'none';
-            }, 5000);
-        } else {
-            // Fallback to alert if error display element not found
-            alert(`Download failed: ${error.message}`);
-        }
+        // Show more detailed error message
+        const errorMessage = error.message || 'An unknown error occurred';
+        alert(`❌ Download Failed\n\n${errorMessage}\n\nPlease try again or contact support if the problem persists.`);
     } finally {
         // Reset button state
-        if (downloadButton) {
-            downloadButton.disabled = false;
-            downloadButton.classList.remove('downloading');
-            downloadButton.innerHTML = originalHTML;
-            
-            // Hide progress container if it exists
-            const progressContainer = document.querySelector('.download-progress');
-            if (progressContainer) {
-                progressContainer.style.display = 'none';
-            }
-        }
+        downloadButton.disabled = false;
+        downloadButton.innerHTML = originalHTML;
     }
 }
 
 // Add event delegation for dynamically created download button
+console.log('Adding click event listener for download button');
 document.addEventListener('click', (event) => {
-    if (event.target.closest('#downloadButton')) {
-        handleDownload();
+    console.log('Click event detected on:', event.target);
+    const downloadButton = event.target.closest('#downloadButton');
+    if (downloadButton) {
+        console.log('Download button clicked, current state:', {
+            disabled: downloadButton.disabled,
+            display: window.getComputedStyle(downloadButton).display,
+            visibility: window.getComputedStyle(downloadButton).visibility
+        });
+        if (!downloadButton.disabled) {
+            handleDownload();
+        } else {
+            console.log('Download button is disabled');
+        }
     }
 });
 

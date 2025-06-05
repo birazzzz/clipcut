@@ -1,5 +1,5 @@
 // Backend API URL - Update this if your backend is hosted elsewhere
-const BACKEND_URL = 'http://localhost:8001';
+const BACKEND_URL = 'http://localhost:3000'; // Changed from 8001 to 3000
 
 // DOM Elements for Theme Toggle
 const themeToggle = document.getElementById('themeToggle');
@@ -422,12 +422,27 @@ async function handleDownload() {
     const originalHTML = downloadButton.innerHTML;
     
     try {
-        // Show loading state
+        // Show loading state with animation
         downloadButton.disabled = true;
-        downloadButton.innerHTML = '<span class="material-symbols-rounded spin">hourglass_empty</span><span>Preparing</span>';
+        downloadButton.classList.add('downloading');
+        downloadButton.innerHTML = `
+            <span class="material-symbols-rounded spin">hourglass_empty</span>
+            <span class="button-text">Preparing...</span>
+        `;
+        
+        // Show progress container if it exists
+        const progressContainer = document.querySelector('.download-progress');
+        if (progressContainer) {
+            progressContainer.style.display = 'block';
+            const progressBar = progressContainer.querySelector('.progress-bar');
+            if (progressBar) {
+                progressBar.style.width = '0%';
+                progressBar.textContent = '0%';
+            }
+        }
         
         // Call our backend to download the video
-        const response = await fetch(`${BACKEND_URL}/api/download`, {
+        const response = await fetch(`${BACKEND_URL}/download`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -465,12 +480,33 @@ async function handleDownload() {
         
     } catch (error) {
         console.error('Download error:', error);
-        alert(`Download failed: ${error.message}`);
+        
+        // Show error message in the UI
+        const errorDisplay = document.getElementById('errorDisplay');
+        if (errorDisplay) {
+            errorDisplay.textContent = `Download failed: ${error.message}`;
+            errorDisplay.style.display = 'block';
+            
+            // Hide error after 5 seconds
+            setTimeout(() => {
+                errorDisplay.style.display = 'none';
+            }, 5000);
+        } else {
+            // Fallback to alert if error display element not found
+            alert(`Download failed: ${error.message}`);
+        }
     } finally {
         // Reset button state
         if (downloadButton) {
             downloadButton.disabled = false;
+            downloadButton.classList.remove('downloading');
             downloadButton.innerHTML = originalHTML;
+            
+            // Hide progress container if it exists
+            const progressContainer = document.querySelector('.download-progress');
+            if (progressContainer) {
+                progressContainer.style.display = 'none';
+            }
         }
     }
 }

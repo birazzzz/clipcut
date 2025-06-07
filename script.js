@@ -12,9 +12,7 @@ const clipTextarea = document.getElementById('clipTextarea');
 const videoInfoDisplay = document.getElementById('videoInfoDisplay');
 const clipModeButtons = document.querySelectorAll('.clip-mode-button');
 const dropdownItems = document.querySelectorAll('.dropdown-item');
-const clipButton = document.getElementById('clipButton');
-const clipButtonTextMain = clipButton.querySelector('.clip-button-text-main');
-const clipButtonTextSuffix = clipButton.querySelector('.clip-button-text-suffix');
+const thumbnailButton = document.getElementById('thumbnailButton');
 const promptButton = document.getElementById('promptButton'); 
 const fullClipButton = document.getElementById('fullClipButton');
 const enterButton = document.getElementById('enterButton');
@@ -374,43 +372,11 @@ if (themeToggle) {
 clipModeButtons.forEach(button => {
     button.dataset.isOutlined = 'true'; // Mark all as outlined by default when inactive
     
-    // The main "Clip" button's active state is handled by its dropdown items.
-    // Other clip mode buttons set their active state on click.
-    if (button.id !== 'clipButton') { 
-        button.addEventListener('click', (event) => {
-            setActiveClipModeButton(event.currentTarget);
-        });
-    }
-});
-
-// Dropdown item click listeners
-dropdownItems.forEach(item => {
-    item.addEventListener('click', () => {
-        const parentButtonId = item.dataset.parentButtonId;
-        const value = item.dataset.value; 
-
-        if (parentButtonId) {
-            const parentButton = document.getElementById(parentButtonId);
-            if (parentButton) {
-                setActiveClipModeButton(parentButton); 
-                // Update text of the parent "Clip" button
-                if (parentButton.id === 'clipButton' && value) {
-                    if(clipButtonTextMain) clipButtonTextMain.textContent = 'Clip';
-                    if(clipButtonTextSuffix) clipButtonTextSuffix.textContent = `(${value})`;
-                }
-            }
-        }
+    // Set active state on click for all clip mode buttons
+    button.addEventListener('click', (event) => {
+        setActiveClipModeButton(event.currentTarget);
     });
 });
-
-// ARIA for "Clip" dropdown button
-if (clipButton) {
-    clipButton.addEventListener('click', () => { 
-        const isExpanded = clipButton.getAttribute('aria-expanded') === 'true' || false;
-        clipButton.setAttribute('aria-expanded', !isExpanded);
-        // Note: Dropdown visibility is primarily CSS hover-driven. This click is for ARIA.
-    });
-}
 
 // Set "Prompt" button as active by default on page load
 if (promptButton) {

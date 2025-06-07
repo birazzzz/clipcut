@@ -20,17 +20,7 @@
                 <span class="highlight">[Clip]</span>Cut
             </div>
             <div class="navbar-links">
-                <button class="nav-button active"> <span class="material-icons-outlined">movie</span>
-                    <span class="button-text">Videos</span>
-                </button>
-                <button class="nav-button">
-                    <span class="material-icons-outlined">photo_size_select_actual</span>
-                    <span class="button-text">Thumbnail</span>
-                </button>
-                <button class="nav-button">
-                    <span class="material-icons-outlined">article</span>
-                    <span class="button-text">Transcript</span>
-                </button>
+                <!-- Navigation links removed -->
             </div>
             <div class="navbar-settings">
                 <button id="themeToggle" class="theme-toggle-button" aria-label="Toggle theme">
@@ -66,30 +56,18 @@
             <textarea id="clipTextarea" class="main-video-link-textarea" placeholder="Paste video link and tell us what to clip"></textarea>
             <div class="clip-controls">
                 <button id="fullClipButton" class="nav-button nav-button-outlined clip-mode-button">
-                    <span class="material-icons-outlined">aspect_ratio</span>
-                    <span>Full Clip</span>
+                    <span class="material-icons-outlined">videocam</span>
+                    <span>Video</span>
                 </button>
                 <button id="promptButton" class="nav-button nav-button-outlined clip-mode-button"> 
                     <span class="material-icons-outlined">description</span>
                     <span>Transcript</span>
                 </button>
 
-                <div class="clip-dropdown-container">
-                    <button id="clipButton" class="nav-button nav-button-outlined clip-dropdown-button clip-mode-button" aria-haspopup="true" aria-expanded="false">
-                        <span class="clip-button-text-main">Thumbnail</span><span class="clip-button-text-suffix"></span>
-                        <span class="material-icons-outlined">arrow_drop_down</span>
-                    </button>
-                    <div class="clip-dropdown-menu" role="menu">
-                        <button class="dropdown-item" role="menuitem" data-parent-button-id="clipButton" data-value="URL">
-                            <span class="material-icons-outlined">link</span>
-                            <span>Current Time URL</span>
-                        </button>
-                        <button class="dropdown-item" role="menuitem" data-parent-button-id="clipButton" data-value="Time">
-                            <span class="material-icons-outlined">crop_square</span> 
-                            <span>Time Stamps</span>
-                        </button>
-                    </div>
-                </div>
+                <button id="thumbnailButton" class="nav-button nav-button-outlined clip-mode-button">
+                    <span class="material-icons-outlined">image</span>
+                    <span>Thumbnail</span>
+                </button>
                 <button id="enterButton" class="nav-button enter-button clip-mode-button" disabled>
                     <span class="material-icons-outlined">subdirectory_arrow_left</span>
                     <span>Enter</span>

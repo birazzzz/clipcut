@@ -1011,6 +1011,16 @@ body.dark-mode .thumbnail-container {
     } 
 }
 @media (max-width: 480px) { 
+    /* Hide icons in bottom buttons */
+    .clip-controls .clip-mode-button .material-icons-outlined {
+        display: none;
+    }
+    
+    /* Adjust button padding when icons are hidden */
+    .clip-controls .clip-mode-button {
+        padding: 8px 12px;
+    }
+    
     .navbar { 
         padding: 15px; 
         margin: 16px auto; 

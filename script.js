@@ -117,9 +117,13 @@ async function fetchVideoInfo(url) {
         return;
     }
     
-    const centerPreview = document.querySelector('.centre');
-    if (centerPreview) {
-        centerPreview.style.display = 'none';
+    // Show loading state
+    const videoPreviewContainer = document.querySelector('.video-preview-container');
+    const loadingContainer = document.getElementById('loadingContainer');
+    
+    if (videoPreviewContainer && loadingContainer) {
+        videoPreviewContainer.classList.add('loading');
+        loadingContainer.style.display = 'flex';
     }
     
     // Hide any previous error messages
@@ -166,6 +170,12 @@ async function fetchVideoInfo(url) {
         console.error('Error fetching video info:', error);
         displayVideoError(`Failed to fetch video details: ${error.message}`);
     } finally {
+        // Restore UI state
+        if (videoPreviewContainer && loadingContainer) {
+            videoPreviewContainer.classList.remove('loading');
+            loadingContainer.style.display = 'none';
+        }
+        
         // Restore original button state and clear interval
         if (enterButton) {
             clearInterval(enterButton._loadingInterval);

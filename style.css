@@ -320,6 +320,28 @@ body.dark-mode {
 }
 body.dark-mode .theme-toggle-knob { transform: translateX(26px); }
 
+/* Loading GIF styles */
+.loading-gif {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(5);
+    z-index: 10;
+    width: 40px;
+    height: 40px;
+}
+
+.loading-gif img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Hide other content when loading */
+.loading-gif:not([style*="display: none"]) ~ * {
+    display: none !important;
+}
+
 .input {
     background-color: var(--card-bg, var(--card-bg-light));
     padding: 24px; 
@@ -900,9 +922,16 @@ body.dark-mode .thumbnail-container {
     } 
 }
 @media (max-width: 480px) { 
+    /* Text field height control */
+    .main-video-link-textarea {
+        height: 44px !important;
+        min-height: 44px !important;
+        max-height: 44px !important;
+        line-height: 24px !important;
+        overflow: hidden !important;
+    }
+    
     /* Hide icons in bottom buttons */
-    .clip-controls .clip-mode-button .material-icons-outlined,
-    .clip-controls .clip-mode-button .material-symbols-outlined,
     .clip-controls .clip-mode-button .material-icons-outlined,
     .clip-controls .clip-mode-button .material-symbols-outlined {
         display: none !important;

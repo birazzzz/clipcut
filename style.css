@@ -364,85 +364,24 @@ body.dark-mode .theme-toggle-knob { transform: translateX(26px); }
 
 .clip-controls { 
     display: flex; 
+    flex-wrap: nowrap;
     align-items: center; 
-    gap: 12px; 
+    gap: 8px; 
     width: 100%;
-    justify-content: space-between;
 }
 
-.enter-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 12px;
-    font-family: 'Manrope', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.2s ease;
+#enterButton {
     margin-left: auto;
-    background-color: var(--nav-button-outlined-bg, var(--nav-button-outlined-bg-light));
-    border: 1px solid var(--nav-button-outlined-border, var(--nav-button-outlined-border-light));
-    color: var(--nav-button-outlined-text, var(--nav-button-outlined-text-light));
 }
 
-.enter-button .material-icons-outlined {
-    color: inherit;
-    transition: color 0.2s ease;
-    font-size: 20px;
+#enterButton.active {
+    background-color: #219BD9 !important;
+    color: white !important;
+    border-color: #219BD9 !important;
 }
 
-.enter-button:not(:disabled):not(.active):hover {
-    background-color: var(--nav-button-outlined-hover-bg, var(--nav-button-outlined-hover-bg-light));
-    border-color: var(--nav-button-outlined-border, var(--nav-button-outlined-border-light));
-}
-
-.enter-button.active {
-    background-color: var(--nav-button-active-bg, var(--nav-button-active-bg-light));
-    color: var(--nav-button-active-text, var(--nav-button-active-text-light));
-    border-color: var(--nav-button-active-bg, var(--nav-button-active-bg-light));
-}
-
-.enter-button.active .material-icons-outlined {
-    color: inherit;
-}
-
-.enter-button:active:not(:disabled) {
-    transform: translateY(1px);
-}
-
-.enter-button:disabled {
-    background-color: var(--button-disabled-bg, var(--button-disabled-bg-light));
-    color: var(--button-disabled-text, var(--button-disabled-text-light));
-    border-color: var(--button-disabled-bg, var(--button-disabled-bg-light));
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-.enter-button-container {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    min-width: fit-content;
-}
-.controls-label {
-    font-size: 14px; 
-    color: var(--text-secondary, var(--text-secondary-light));
-    margin-right: 8px; 
-    transition: color 0.3s ease;
-    white-space: nowrap;
-}
-.enter-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: auto;
-    padding: 0 16px;
-    min-width: 100px;
+#enterButton.active .material-icons-outlined {
+    color: white !important;
 }
 
 .clip-controls .clip-mode-button { 
@@ -644,10 +583,6 @@ align-items: center;
 background-color: rgba(0, 0, 0, 0.6);
 opacity: 0;
 transition: opacity 0.2s ease;
-}
-
-.thumbnail-container:hover .play-button-overlay {
-opacity: 1;
 }
 
 .play-button {
@@ -863,42 +798,6 @@ body.dark-mode .thumbnail-container {
     font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
 }
 
-.enter-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    /* Not sure what this padding is for, removing it for now */
-    background-color: var(--nav-button-active-bg, var(--nav-button-active-bg-light));
-    color: var(--nav-button-active-text, var(--nav-button-active-text-light));
-    border: none;
-    border-radius: 8px;
-    font-family: 'Manrope', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    height: 38px;
-    min-width: 120px;
-}
-
-.enter-button:hover {
-    background-color: #1a8ac8;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.enter-button:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.enter-button .material-symbols-rounded {
-    font-size: 20px;
-    font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
-}
-
 /* Hide download button when there's no video */
 .centre:not(:has(.video-preview-container)) + .download-button {
     display: none;
@@ -912,15 +811,6 @@ body.dark-mode .thumbnail-container {
 .loading-text {
     display: inline-block;
     min-width: 4.5em; /* Keep width consistent to prevent button resizing */
-}
-
-.enter-button .material-symbols-rounded {
-    font-size: 28px;
-    vertical-align: middle;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
 }
 
 /* --- Responsive Adjustments --- */
@@ -992,8 +882,7 @@ body.dark-mode .thumbnail-container {
     }
      .dropdown-item .material-icons-outlined {
         font-size: 18px;
-    }
-
+}
     .navbar .nav-button { flex-grow: 1; justify-content: center; padding: 10px 12px; font-size: 13px; }
 
     .clip-input-section, .video-info-display { 
@@ -1003,7 +892,7 @@ body.dark-mode .thumbnail-container {
 }
     .main-video-link-textarea { font-size: 15px; min-height: 80px; }
     .clip-controls { gap: 8px; }
-    .enter-button { width: auto; margin-left: auto; margin-top: 0; }
+
     .clip-dropdown-menu { 
         min-width: calc(100% - 16px); 
         left: 8px; 
@@ -1012,13 +901,33 @@ body.dark-mode .thumbnail-container {
 }
 @media (max-width: 480px) { 
     /* Hide icons in bottom buttons */
-    .clip-controls .clip-mode-button .material-icons-outlined {
-        display: none;
+    .clip-controls .clip-mode-button .material-icons-outlined,
+    .clip-controls .clip-mode-button .material-symbols-outlined,
+    .clip-controls .clip-mode-button .material-icons-outlined,
+    .clip-controls .clip-mode-button .material-symbols-outlined {
+        display: none !important;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
     }
     
     /* Adjust button padding when icons are hidden */
     .clip-controls .clip-mode-button {
-        padding: 8px 12px;
+        padding: 8px 12px !important;
+        gap: 4px !important;
+        font-size: 12px !important;
+        min-height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+        flex: 0 0 auto;
+        border: 1px solid var(--input-border, var(--input-border-light));
+        background-color: var(--input-bg, var(--input-bg-light));
+        color: var(--text-color, var(--text-color-light));
+        transition: all 0.2s ease;
     }
     
     .navbar { 

@@ -154,57 +154,58 @@ def download_tiktok():
 
     print(f"\n=== Processing TikTok download for URL: {url} ===")
     
+    # Create a temporary file to store the downloaded video
+    temp_file = os.path.join(tempfile.gettempdir(), f"tiktok_{uuid.uuid4()}.mp4")
+    
     try:
-        # Step 1: List all available formats
-        list_cmd = ["yt-dlp", "--list-formats", url]
-        print(f"Running command: {' '.join(list_cmd)}")
-        result = subprocess.run(list_cmd, capture_output=True, text=True)
+        # Configure yt-dlp options
+        ydl_opts = {
+            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            'outtmpl': temp_file,
+            'merge_output_format': 'mp4',
+            'quiet': False,
+            'no_warnings': False,
+            'verbose': True,
+            'nocheckcertificate': True,
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Referer': 'https://www.tiktok.com/',
+                'Origin': 'https://www.tiktok.com',
+                'DNT': '1',
+            }
+        }
         
-        if result.returncode != 0:
-            return jsonify({
-                'error': f'Failed to list formats: {result.stderr}'
-            }), 400
-
-        # Step 2: Parse the output to find the best MP4 format with audio
-        format_id = None
-        for line in result.stdout.split('\n'):
-            if 'mp4' in line and 'audio only' not in line:
-                parts = line.split()
-                if parts and parts[0].isdigit():
-                    format_id = parts[0]
-                    break
-
-        if not format_id:
-            return jsonify({
-                'error': 'No suitable MP4 format found with video and audio'
-            }), 400
-
-        print(f"Selected format ID: {format_id}")
-
-        # Step 3: Download the video with the selected format
-        temp_file = "temp_video.mp4"
-        download_cmd = [
-            "yt-dlp",
-            "-f", format_id,
-            "-o", temp_file,
-            "--no-warnings",
-            "--no-check-certificate",
-            url
-        ]
+        print(f"Downloading video with options: {ydl_opts}")
         
-        print(f"Running command: {' '.join(download_cmd)}")
-        download_result = subprocess.run(download_cmd, capture_output=True, text=True)
+        # Download the video using yt-dlp Python module
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Get video info first to check available formats
+            info = ydl.extract_info(url, download=False)
+            print(f"Available formats: {[f['format_id'] for f in info.get('formats', [])]}")
+            
+            # Download the video
+            ydl.download([url])
         
-        if download_result.returncode != 0:
-            return jsonify({
-                'error': f'Download failed: {download_result.stderr}'
-            }), 400
-
-        # Step 4: Send the file to the frontend
+        # Check if file was downloaded
+        if not os.path.exists(temp_file):
+            return jsonify({'error': 'Download failed: No file was created'}), 500
+            
+        # Get the actual filename from the download
+        actual_file = temp_file
+        for ext in ['', '.mp4', '.mkv', '.webm']:
+            if os.path.exists(temp_file + ext):
+                actual_file = temp_file + ext
+                break
+                
+        print(f"Download complete. File saved to: {actual_file}")
+        
+        # Send the file to the frontend
         return send_file(
-            temp_file,
+            actual_file,
             as_attachment=True,
-            download_name="tiktok_video.mp4",
+            download_name=os.path.basename(actual_file),
             mimetype='video/mp4',
             conditional=True
         )
@@ -212,6 +213,13 @@ def download_tiktok():
     except Exception as e:
         print(f"Error in download_tiktok: {str(e)}")
         return jsonify({'error': f'Error downloading TikTok: {str(e)}'}), 500
+    finally:
+        # Clean up the temporary file after sending
+        try:
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+        except Exception as e:
+            print(f"Error cleaning up temporary file: {e}")
 
 @app.route('/api/tiktok-info', methods=['POST'])
 def get_tiktok_info():

@@ -178,8 +178,12 @@ async function fetchVideoInfo(url) {
     
     try {
         // Check if it's a TikTok URL
-        const isTikTok = url.includes('tiktok.com') || url.includes('vm.tiktok.com');
-        const endpoint = isTikTok ? '/api/tiktok-info' : '/api/video-info';
+        let endpoint = '/api/video-info';
+        if (url.includes('tiktok.com') || url.includes('vm.tiktok.com')) {
+            endpoint = '/api/tiktok-info';
+        } else if (url.includes('instagram.com') || url.includes('instagr.am')) {
+            endpoint = '/api/instagram-info';
+        }
         
         console.log(`Fetching from ${endpoint} for URL:`, url);
         
@@ -270,6 +274,8 @@ function displayVideoData(videoData) {
     let thumbnailUrl = videoData.thumbnail || '';
     const isTwitter = videoData.platform === 'twitter';
     const isReddit = videoData.platform === 'reddit';
+    const isTikTok = videoData.platform === 'tiktok';
+    const isInstagram = videoData.platform === 'instagram';
     const videoId = extractVideoID(videoData.webpage_url || '');
     
     // Platform-specific URL handling
@@ -279,6 +285,23 @@ function displayVideoData(videoData) {
     } else if (isReddit && thumbnailUrl) {
         // Ensure we're using a good quality Reddit thumbnail
         thumbnailUrl = thumbnailUrl.replace('external-preview', 'preview');
+    } else if (isTikTok && thumbnailUrl) {
+        // Ensure we're using the best quality TikTok thumbnail
+        // TikTok often provides multiple thumbnail sizes - try to get a larger one if available
+        if (typeof videoData.thumbnails === 'object' && videoData.thumbnails.length > 0) {
+            // Sort by resolution and pick the highest
+            const sortedThumbs = [...videoData.thumbnails].sort((a, b) => 
+                (b.width * b.height) - (a.width * a.height)
+            );
+            thumbnailUrl = sortedThumbs[0].url;
+        }
+        // Ensure the URL is absolute (sometimes TikTok returns relative URLs)
+        if (thumbnailUrl && !thumbnailUrl.startsWith('http')) {
+            thumbnailUrl = new URL(thumbnailUrl, 'https://www.tiktok.com').toString();
+        }
+    } else if (isInstagram && thumbnailUrl) {
+        // Ensure we're using the best quality Instagram thumbnail
+        thumbnailUrl = thumbnailUrl.replace('s150x150/', '');
     }
     
     // Format duration if available
@@ -301,6 +324,7 @@ function displayVideoData(videoData) {
                         ${videoData.platform === 'youtube' ? `<div class="video-platform" data-platform="youtube">YouTube</div>` : ''}
                         ${videoData.platform === 'reddit' ? `<div class="video-platform" data-platform="reddit">Reddit</div>` : ''}
                         ${videoData.platform === 'tiktok' ? `<div class="video-platform" data-platform="tiktok">TikTok</div>` : ''}
+                        ${videoData.platform === 'instagram' ? `<div class="video-platform" data-platform="instagram">Instagram</div>` : ''}
                     </div>
             </div>` 
         : ''}
@@ -484,8 +508,12 @@ async function handleDownload() {
     
     try {
         // Check if it's a TikTok URL
-        const isTikTok = downloadUrl.includes('tiktok.com') || downloadUrl.includes('vm.tiktok.com');
-        const endpoint = isTikTok ? '/api/tiktok-download' : '/api/download';
+        let endpoint = '/api/download';
+        if (downloadUrl.includes('tiktok.com') || downloadUrl.includes('vm.tiktok.com')) {
+            endpoint = '/api/tiktok-download';
+        } else if (downloadUrl.includes('instagram.com') || downloadUrl.includes('instagr.am')) {
+            endpoint = '/api/instagram-download';
+        }
         
         console.log(`Using endpoint: ${endpoint} for URL:`, downloadUrl);
         

@@ -72,13 +72,38 @@ def extract_video_info(info):
             platform = 'reddit'
         elif 'tiktok.com' in webpage_url or 'tiktok' in extractor or 'vm.tiktok.com' in webpage_url:
             platform = 'tiktok'
+        elif 'instagram.com' in webpage_url or 'instagr.am' in webpage_url or 'instagram' in extractor:
+            platform = 'instagram'
             
-            # Handle TikTok-specific data extraction
+            # Special handling for Instagram
             if not info.get('title') and info.get('description'):
                 info['title'] = info['description']
                 
             # Ensure we have a valid thumbnail
             if not info.get('thumbnail'):
+                # Try to get the best available thumbnail
+                for thumb in info.get('thumbnails', [])[::-1]:  # Try highest resolution first
+                    if thumb.get('url'):
+                        info['thumbnail'] = thumb['url']
+                        break
+                        
+            # Add platform-specific data
+            info['platform'] = 'instagram'
+            
+        else:
+            platform = 'other'
+            
+        # Handle TikTok-specific data extraction
+        if not info.get('title') and info.get('description'):
+            info['title'] = info['description']
+            
+        # Ensure we have a valid thumbnail
+        if not info.get('thumbnail'):
+            # Try to get the best available thumbnail
+            for thumb in info.get('thumbnails', [])[::-1]:  # Try highest resolution first
+                if thumb.get('url'):
+                    info['thumbnail'] = thumb['url']
+                    break
                 # Try to get the best available thumbnail
                 for thumb in info.get('thumbnails', [])[::-1]:  # Try highest resolution first
                     if thumb.get('url'):
@@ -143,6 +168,84 @@ def debug_extractor_info(ydl, url):
     except Exception as e:
         print(f"Debug extraction error: {str(e)}")
         raise
+
+@app.route('/api/instagram-download', methods=['POST'])
+def download_instagram():
+    data = request.get_json()
+    url = data.get('url')
+    
+    if not url:
+        return jsonify({'error': 'No URL provided'}), 400
+
+    print(f"\n=== Processing Instagram download for URL: {url} ===")
+    
+    # Create a temporary file to store the downloaded video
+    temp_file = os.path.join(tempfile.gettempdir(), f"instagram_{uuid.uuid4()}.mp4")
+    
+    try:
+        # Configure yt-dlp options for Instagram
+        ydl_opts = {
+            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            'outtmpl': temp_file,
+            'merge_output_format': 'mp4',
+            'quiet': False,
+            'no_warnings': False,
+            'verbose': True,
+            'nocheckcertificate': True,
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Referer': 'https://www.instagram.com/',
+                'Origin': 'https://www.instagram.com',
+                'DNT': '1',
+                'x-requested-with': 'XMLHttpRequest'
+            }
+        }
+        
+        print(f"Downloading Instagram video with options: {ydl_opts}")
+        
+        # Download the video using yt-dlp Python module
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Get video info first to check available formats
+            info = ydl.extract_info(url, download=False)
+            print(f"Available formats: {[f['format_id'] for f in info.get('formats', [])]}")
+            
+            # Download the video
+            ydl.download([url])
+        
+        # Check if file was downloaded
+        if not os.path.exists(temp_file):
+            return jsonify({'error': 'Download failed: No file was created'}), 500
+            
+        # Get the actual filename from the download
+        actual_file = temp_file
+        for ext in ['', '.mp4', '.mkv', '.webm']:
+            if os.path.exists(temp_file + ext):
+                actual_file = temp_file + ext
+                break
+                
+        print(f"Download complete. File saved to: {actual_file}")
+        
+        # Send the file to the frontend
+        return send_file(
+            actual_file,
+            as_attachment=True,
+            download_name=os.path.basename(actual_file),
+            mimetype='video/mp4',
+            conditional=True
+        )
+
+    except Exception as e:
+        print(f"Error in download_instagram: {str(e)}")
+        return jsonify({'error': f'Error downloading Instagram video: {str(e)}'}), 500
+    finally:
+        # Clean up the temporary file after sending
+        try:
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+        except Exception as e:
+            print(f"Error cleaning up temporary file: {e}")
 
 @app.route('/api/tiktok-download', methods=['POST'])
 def download_tiktok():
@@ -221,6 +324,68 @@ def download_tiktok():
         except Exception as e:
             print(f"Error cleaning up temporary file: {e}")
 
+@app.route('/api/instagram-info', methods=['POST'])
+def get_instagram_info():
+    data = request.get_json()
+    url = data.get('url')
+    
+    if not url:
+        return jsonify({'error': 'No URL provided'}), 400
+    
+    print(f"\n=== Processing Instagram URL with yt-dlp: {url} ===")
+    
+    try:
+        # Configure yt-dlp options for getting info only
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': False,
+            'extract_flat': False,
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Referer': 'https://www.instagram.com/',
+                'Origin': 'https://www.instagram.com',
+                'DNT': '1',
+                'x-requested-with': 'XMLHttpRequest'
+            }
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Get video info without downloading
+            info = ydl.extract_info(url, download=False)
+            
+            # Extract thumbnail URLs
+            thumbnails = []
+            if 'thumbnail' in info:
+                thumbnails.append({
+                    'url': info['thumbnail'],
+                    'width': 1080,  # Instagram thumbnails are typically square
+                    'height': 1080
+                })
+            
+            # Get the best thumbnail URL (highest resolution)
+            thumbnail_url = thumbnails[0]['url'] if thumbnails else None
+            
+            # Prepare response data
+            response_data = {
+                'title': info.get('title', 'Instagram Video'),
+                'thumbnail': thumbnail_url,
+                'thumbnails': thumbnails,
+                'duration': info.get('duration'),
+                'uploader': info.get('uploader', 'Instagram User'),
+                'webpage_url': info.get('webpage_url', url),
+                'formats': info.get('formats', []),
+                'platform': 'instagram'
+            }
+            
+            print(f"Instagram info retrieved successfully. Thumbnail URL: {thumbnail_url}")
+            return jsonify(response_data)
+            
+    except Exception as e:
+        print(f"Error in get_instagram_info: {str(e)}")
+        return jsonify({'error': f'Error getting Instagram info: {str(e)}'}), 500
+
 @app.route('/api/tiktok-info', methods=['POST'])
 def get_tiktok_info():
     data = request.get_json()
@@ -232,6 +397,71 @@ def get_tiktok_info():
     print(f"\n=== Processing TikTok URL with yt-dlp: {url} ===")
     
     try:
+        # Configure yt-dlp options for getting info only
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': False,
+            'extract_flat': False,
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Referer': 'https://www.tiktok.com/',
+            }
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Get video info without downloading
+            info = ydl.extract_info(url, download=False)
+            
+            # Extract thumbnail URLs - TikTok typically provides multiple sizes
+            thumbnails = []
+            if 'thumbnail' in info:
+                # Add the main thumbnail
+                thumbnails.append({
+                    'url': info['thumbnail'],
+                    'width': 720,  # Default width if not specified
+                    'height': 1280  # Default height if not specified
+                })
+            
+            # Look for thumbnails in the format list
+            if 'formats' in info:
+                for fmt in info['formats']:
+                    if fmt.get('ext') == 'm3u8' and 'thumbnail' in fmt:
+                        thumbnails.append({
+                            'url': fmt['thumbnail'],
+                            'width': fmt.get('width', 720),
+                            'height': fmt.get('height', 1280)
+                        })
+            
+            # If no thumbnails found in the usual places, try to construct from video ID
+            if not thumbnails and 'id' in info:
+                video_id = info['id']
+                thumbnails.append({
+                    'url': f'https://p16-sign.tiktokcdn-us.com/tos-useast5-avt-0068-tx/{video_id}~c5_720x720.jpeg',
+                    'width': 720,
+                    'height': 720
+                })
+            
+            # Sort thumbnails by resolution (width * height) in descending order
+            thumbnails.sort(key=lambda x: x.get('width', 0) * x.get('height', 0), reverse=True)
+            
+            # Get the best thumbnail URL (highest resolution)
+            thumbnail_url = thumbnails[0]['url'] if thumbnails else None
+            
+            # Prepare response data
+            response_data = {
+                'title': info.get('title', 'TikTok Video'),
+                'thumbnail': thumbnail_url,
+                'thumbnails': thumbnails,  # Include all available thumbnails
+                'duration': info.get('duration'),
+                'uploader': info.get('uploader', 'TikTok User'),
+                'webpage_url': info.get('webpage_url', url),
+                'formats': info.get('formats', []),
+                'platform': 'tiktok'  # Explicitly set platform
+            }
+            
+            print(f"TikTok info retrieved successfully. Thumbnail URL: {thumbnail_url}")
+            return jsonify(response_data)
+            
         # Options to get all video information including all formats
         ydl_opts_get_info = {
             'quiet': False,

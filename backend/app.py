@@ -4,6 +4,7 @@ import yt_dlp
 import os
 import tempfile
 import uuid
+import subprocess
 
 app = Flask(__name__)
 # Enable CORS for all routes with specific origins and methods
@@ -143,6 +144,75 @@ def debug_extractor_info(ydl, url):
         print(f"Debug extraction error: {str(e)}")
         raise
 
+@app.route('/api/tiktok-download', methods=['POST'])
+def download_tiktok():
+    data = request.get_json()
+    url = data.get('url')
+    
+    if not url:
+        return jsonify({'error': 'No URL provided'}), 400
+
+    print(f"\n=== Processing TikTok download for URL: {url} ===")
+    
+    try:
+        # Step 1: List all available formats
+        list_cmd = ["yt-dlp", "--list-formats", url]
+        print(f"Running command: {' '.join(list_cmd)}")
+        result = subprocess.run(list_cmd, capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            return jsonify({
+                'error': f'Failed to list formats: {result.stderr}'
+            }), 400
+
+        # Step 2: Parse the output to find the best MP4 format with audio
+        format_id = None
+        for line in result.stdout.split('\n'):
+            if 'mp4' in line and 'audio only' not in line:
+                parts = line.split()
+                if parts and parts[0].isdigit():
+                    format_id = parts[0]
+                    break
+
+        if not format_id:
+            return jsonify({
+                'error': 'No suitable MP4 format found with video and audio'
+            }), 400
+
+        print(f"Selected format ID: {format_id}")
+
+        # Step 3: Download the video with the selected format
+        temp_file = "temp_video.mp4"
+        download_cmd = [
+            "yt-dlp",
+            "-f", format_id,
+            "-o", temp_file,
+            "--no-warnings",
+            "--no-check-certificate",
+            url
+        ]
+        
+        print(f"Running command: {' '.join(download_cmd)}")
+        download_result = subprocess.run(download_cmd, capture_output=True, text=True)
+        
+        if download_result.returncode != 0:
+            return jsonify({
+                'error': f'Download failed: {download_result.stderr}'
+            }), 400
+
+        # Step 4: Send the file to the frontend
+        return send_file(
+            temp_file,
+            as_attachment=True,
+            download_name="tiktok_video.mp4",
+            mimetype='video/mp4',
+            conditional=True
+        )
+
+    except Exception as e:
+        print(f"Error in download_tiktok: {str(e)}")
+        return jsonify({'error': f'Error downloading TikTok: {str(e)}'}), 500
+
 @app.route('/api/tiktok-info', methods=['POST'])
 def get_tiktok_info():
     data = request.get_json()
@@ -151,84 +221,150 @@ def get_tiktok_info():
     if not url:
         return jsonify({'error': 'No URL provided'}), 400
     
-    print(f"\n=== Processing TikTok URL: {url} ===")
+    print(f"\n=== Processing TikTok URL with yt-dlp: {url} ===")
     
     try:
-        # Try using the API endpoint directly
-        import re
-        import json
-        import requests
+        # Options to get all video information including all formats
+        ydl_opts_get_info = {
+            'quiet': False,
+            'no_warnings': False,
+            'extract_flat': False,  # Need individual formats
+            'force_generic_extractor': False,
+            'extractor_retries': 3,
+            'fragment_retries': 3,
+            'retries': 3,
+            'nocheckcertificate': True,
+            'ignoreerrors': False, 
+            'no_color': True,
+            'cachedir': False,
+            'noplaylist': True,
+            'extractor_args': {
+                'tiktok': {
+                    'extract_flat': False,
+                }
+            },
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Referer': 'https://www.tiktok.com/',
+                'Origin': 'https://www.tiktok.com',
+                'DNT': '1',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1',
+                'Cache-Control': 'max-age=0',
+                'TE': 'trailers',
+            }
+        }
+
+        print(f"\n=== Getting all video info for TikTok URL: {url} ===")
+        with yt_dlp.YoutubeDL(ydl_opts_get_info) as ydl:
+            info = ydl.extract_info(url, download=False)
+
+        if not info:
+            print("ERROR: yt-dlp extract_info returned None or empty.")
+            return jsonify({'error': 'Failed to extract video information from TikTok. yt-dlp returned no data.'}), 500
         
-        # Extract video ID from URL
-        video_id = None
-        if 'vm.tiktok.com' in url:
-            # Resolve short URL first
-            session = requests.Session()
-            response = session.head(url, allow_redirects=True)
-            resolved_url = response.url
-            print(f"Resolved URL: {resolved_url}")
-            match = re.search(r'/video/(\d+)', resolved_url)
-            if match:
-                video_id = match.group(1)
+        print(f"\n=== All Available Formats for {url} (from extract_info) ===")
+        if 'formats' in info and info['formats']:
+            for fmt_idx, fmt_detail in enumerate(info['formats']):
+                format_id = fmt_detail.get('format_id', 'N/A')
+                ext = fmt_detail.get('ext', 'N/A')
+                resolution = fmt_detail.get('resolution', 'N/A')
+                vcodec = fmt_detail.get('vcodec', 'none')
+                acodec = fmt_detail.get('acodec', 'none')
+                note = fmt_detail.get('format_note', '')
+                filesize = fmt_detail.get('filesize') or fmt_detail.get('filesize_approx')
+                filesize_str = f"{filesize / (1024*1024):.2f}MB" if filesize else "N/A"
+                has_url = 'present' if fmt_detail.get('url') else 'missing'
+                print(f"  [{fmt_idx}] ID: {format_id}, Ext: {ext}, Res: {resolution}, Vid: {vcodec}, Aud: {acodec}, Note: {note}, Size: {filesize_str}, URL: {has_url}")
         else:
-            match = re.search(r'/video/(\d+)', url)
-            if match:
-                video_id = match.group(1)
+            print("  No 'formats' array found in yt-dlp info or it's empty.")
+
+        # Programmatically select the best format
+        selected_format = None
+        candidates = []
+
+        if 'formats' in info and info['formats']:
+            for fmt_detail in info['formats']:
+                if fmt_detail.get('url') and fmt_detail.get('vcodec', 'none') != 'none' and fmt_detail.get('acodec', 'none') != 'none':
+                    candidates.append(fmt_detail)
         
-        if not video_id:
-            return jsonify({'error': 'Could not extract video ID from URL'}), 400
+        if candidates:
+            mp4_candidates = [f for f in candidates if f.get('ext') == 'mp4']
+            if mp4_candidates:
+                mp4_candidates.sort(key=lambda f: (int(f.get('height', 0) or 0), int(f.get('vbr', 0) or f.get('tbr', 0) or 0)), reverse=True)
+                selected_format = mp4_candidates[0]
+                print(f"Selected MP4 (with audio): ID {selected_format.get('format_id')}, Res {selected_format.get('resolution')}")
+
+            if not selected_format:
+                webm_candidates = [f for f in candidates if f.get('ext') == 'webm']
+                if webm_candidates:
+                    webm_candidates.sort(key=lambda f: (int(f.get('height', 0) or 0), int(f.get('vbr', 0) or f.get('tbr', 0) or 0)), reverse=True)
+                    selected_format = webm_candidates[0]
+                    print(f"Selected WebM (with audio): ID {selected_format.get('format_id')}, Res {selected_format.get('resolution')}")
             
-        print(f"Extracted video ID: {video_id}")
-        
-        # Try to get video info from TikTok API
-        api_url = f'https://api16-normal-c-useast1a.tiktokv.com/aweme/v1/feed/?aweme_id={video_id}'
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'application/json',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Referer': 'https://www.tiktok.com/',
-            'Origin': 'https://www.tiktok.com',
-        }
-        
-        print(f"Fetching from API: {api_url}")
-        response = requests.get(api_url, headers=headers, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-        
-        if not data.get('aweme_list') or not data['aweme_list']:
-            return jsonify({'error': 'No video data found in API response'}), 400
-            
-        video_data = data['aweme_list'][0]
-        
-        # Extract relevant information
-        video_info = {
-            'title': video_data.get('desc', 'TikTok Video'),
-            'thumbnail': video_data.get('video', {}).get('cover', {}).get('url_list', [''])[0],
-            'duration': video_data.get('duration', 0),
-            'uploader': video_data.get('author', {}).get('unique_id', ''),
-            'webpage_url': f"https://www.tiktok.com/@{video_data.get('author', {}).get('unique_id', '')}/video/{video_id}",
+            if not selected_format: # Fallback to any candidate if specific extensions not found
+                candidates.sort(key=lambda f: (int(f.get('height', 0) or 0), int(f.get('vbr', 0) or f.get('tbr', 0) or 0)), reverse=True)
+                selected_format = candidates[0]
+                print(f"Selected best available (with audio, any extension): ID {selected_format.get('format_id')}, Res {selected_format.get('resolution')}")
+
+        # Prepare the response
+        video_data_to_return = {
+            'title': info.get('title', 'TikTok Video'),
+            'thumbnail': info.get('thumbnail', ''),
+            'duration': info.get('duration', 0),
+            'uploader': info.get('uploader', ''),
+            'webpage_url': info.get('webpage_url', url),
             'platform': 'tiktok',
-            'formats': []
+            'formats': [], 
+            'direct_url': None,
+            'selected_format_id': None,
+            'error_message': None
         }
-        
-        # Add video formats
-        if 'video' in video_data and 'play_addr' in video_data['video']:
-            play_addr = video_data['video']['play_addr']
-            video_info['formats'].append({
-                'url': play_addr.get('url_list', [''])[0],
-                'ext': 'mp4',
-                'format': 'Direct Video',
-                'quality': 'best'
-            })
-        
-        print(f"Successfully extracted TikTok video info")
-        return jsonify(video_info)
-        
+
+        if 'formats' in info and info['formats']:
+            for fmt_detail in info['formats']:
+                if fmt_detail.get('url'): 
+                    video_data_to_return['formats'].append({
+                        'url': fmt_detail['url'],
+                        'ext': fmt_detail.get('ext', 'N/A'),
+                        'format_note': fmt_detail.get('format_note', ''),
+                        'format_id': fmt_detail.get('format_id', 'N/A'),
+                        'resolution': fmt_detail.get('resolution', fmt_detail.get('height', '')),
+                        'filesize': fmt_detail.get('filesize') or fmt_detail.get('filesize_approx'),
+                        'vcodec': fmt_detail.get('vcodec', 'none'),
+                        'acodec': fmt_detail.get('acodec', 'none'),
+                        'tbr': fmt_detail.get('tbr')
+                    })
+            video_data_to_return['formats'].sort(key=lambda x: (
+                (int(str(x.get('resolution', '0x0')).split('x')[-1] or 0) if isinstance(x.get('resolution'), str) else int(x.get('resolution',0) or 0)),
+                int(x.get('tbr',0) or 0)
+            ), reverse=True)
+
+        if selected_format and selected_format.get('url'):
+            video_data_to_return['direct_url'] = selected_format['url']
+            video_data_to_return['selected_format_id'] = selected_format.get('format_id')
+            print(f"Final selected format URL for client: {video_data_to_return['direct_url']}")
+        else:
+            print("ERROR: No suitable downloadable format with video and audio found after manual selection.")
+            video_data_to_return['error_message'] = 'No downloadable video format with both video and audio found. Please check backend logs for all available formats.'
+            return jsonify(video_data_to_return), 404
+
+        return jsonify(video_data_to_return)
+            
     except Exception as e:
-        print(f"Error in TikTok API: {str(e)}")
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Error processing TikTok URL: {str(e)}\n{error_trace}")
         return jsonify({
-            'error': f'Failed to fetch TikTok video info: {str(e)}',
-            'type': 'tiktok_api_error'
+            'error': f'Failed to process TikTok video: {str(e)}',
+            'type': 'tiktok_processing_error',
+            'details': str(e)
         }), 400
 
 @app.route('/api/video-info', methods=['POST'])

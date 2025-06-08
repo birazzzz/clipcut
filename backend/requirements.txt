@@ -1,3 +1,4 @@
 flask==2.3.3
 flask-cors==4.0.0
-yt-dlp @ https://github.com/yt-dlp/yt-dlp/archive/master.tar.gz  # Use latest development version for TikTok
+requests>=2.31.0
+yt-dlp>=2023.11.16  # Latest stable version with TikTok support

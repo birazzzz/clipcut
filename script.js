@@ -474,7 +474,8 @@ async function handleDownload() {
         return;
     }
     
-    console.log('Current video URL:', window.currentVideoUrl);
+    const downloadUrl = window.currentVideoUrl;
+    console.log('Current video URL:', downloadUrl);
     
     // Show loading state
     const originalHTML = downloadButton.innerHTML;
@@ -482,31 +483,46 @@ async function handleDownload() {
     downloadButton.innerHTML = '<span class="material-symbols-rounded spin">hourglass_empty</span> Preparing...';
     
     try {
+        // Check if it's a TikTok URL
+        const isTikTok = downloadUrl.includes('tiktok.com') || downloadUrl.includes('vm.tiktok.com');
+        const endpoint = isTikTok ? '/api/tiktok-download' : '/api/download';
+        
+        console.log(`Using endpoint: ${endpoint} for URL:`, downloadUrl);
+        
         // Show preparing state
         downloadButton.innerHTML = '<span class="material-symbols-rounded spin">hourglass_empty</span> Preparing download...';
         
         // For Reddit, ensure we're using the correct URL format
-        let downloadUrl = window.currentVideoUrl;
+        let processedUrl = downloadUrl;
         if (downloadUrl.includes('reddit.com') || downloadUrl.includes('redd.it')) {
             // Remove any query parameters and fragments
-            downloadUrl = downloadUrl.split('?')[0].split('#')[0];
-            console.log('Processing Reddit URL:', downloadUrl);
+            processedUrl = downloadUrl.split('?')[0].split('#')[0];
+            console.log('Processing Reddit URL:', processedUrl);
         }
         
         // Start the download
-        console.log('Sending download request to backend for URL:', downloadUrl);
-        const response = await fetch(`${BACKEND_URL}/api/download`, {
+        console.log('Sending download request to backend for URL:', processedUrl);
+        const response = await fetch(`${BACKEND_URL}${endpoint}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ url: downloadUrl })
+            body: JSON.stringify({ url: processedUrl })
         });
 
         if (!response.ok) {
-            let errorData;
+            let errorData = {};
             try {
-                errorData = await response.json();
+                // Try to parse error response as JSON
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    errorData = await response.json();
+                } else {
+                    // If not JSON, get the text response
+                    const text = await response.text();
+                    console.error('Non-JSON error response:', text);
+                    throw new Error(`Server error: ${response.status} ${response.statusText}`);
+                }
             } catch (e) {
                 console.error('Error parsing error response:', e);
                 throw new Error(`Server error: ${response.status} ${response.statusText}`);
@@ -530,9 +546,9 @@ async function handleDownload() {
         const contentDisposition = response.headers.get('content-disposition');
         let filename = 'video.mp4';
         if (contentDisposition) {
-            const filenameMatch = contentDisposition.match(/filename="?([^";]+)"?/);
+            const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
             if (filenameMatch && filenameMatch[1]) {
-                filename = filenameMatch[1];
+                filename = filenameMatch[1].replace(/['"]/g, '');
             }
         }
 
@@ -559,8 +575,10 @@ async function handleDownload() {
         alert(`❌ Download Failed\n\n${errorMessage}\n\nPlease try again or contact support if the problem persists.`);
     } finally {
         // Reset button state
-        downloadButton.disabled = false;
-        downloadButton.innerHTML = originalHTML;
+        if (downloadButton) {
+            downloadButton.disabled = false;
+            downloadButton.innerHTML = originalHTML;
+        }
     }
 }
 

@@ -124,6 +124,20 @@ function extractVideoID(url) {
         return redditShortMatch[1];
     }
     
+    // Handle TikTok URLs
+    const tiktokRegExp = /tiktok\.com\/@[^/]+\/video\/(\d+)/;
+    const tiktokMatch = url.match(tiktokRegExp);
+    if (tiktokMatch && tiktokMatch[1]) {
+        return tiktokMatch[1];
+    }
+    
+    // Handle TikTok short URLs
+    const tiktokShortRegExp = /vm\.tiktok\.com\/([^/?#&]+)/;
+    const tiktokShortMatch = url.match(tiktokShortRegExp);
+    if (tiktokShortMatch && tiktokShortMatch[1]) {
+        return tiktokShortMatch[1];
+    }
+    
     return null;
 }
 
@@ -146,51 +160,50 @@ async function fetchVideoInfo(url) {
         loadingContainer.style.display = 'flex';
     }
     
-    // Hide any previous error messages
-    if (videoInfoDisplay) {
-        videoInfoDisplay.style.display = 'none';
+    // Show loading state on the enter button
+    const enterButton = document.getElementById('enterButton');
+    let originalButtonHTML = '';
+    if (enterButton) {
+        originalButtonHTML = enterButton.innerHTML;
+        enterButton.innerHTML = '<span class="material-icons-outlined spin">refresh</span><span>Loading...</span>';
+        enterButton.disabled = true;
+        
+        // Add spinning animation
+        enterButton._loadingInterval = setInterval(() => {
+            const icon = enterButton.querySelector('.material-icons-outlined');
+            if (icon) icon.style.transform = `rotate(${icon._rotation || 0}deg)`;
+            icon._rotation = ((icon._rotation || 0) + 30) % 360;
+        }, 50);
     }
     
-    // Save original button text and set loading state
-    const enterButton = document.getElementById('enterButton');
-    const originalButtonHTML = enterButton.innerHTML;
-    enterButton.innerHTML = '<span class="loading-text">Loading</span>';
-    enterButton.disabled = true;
-    
-    // Start the ellipsis animation
-    const loadingText = enterButton.querySelector('.loading-text');
-    let dots = 0;
-    const loadingInterval = setInterval(() => {
-        dots = (dots + 1) % 4;
-        loadingText.textContent = 'Loading' + '.'.repeat(dots);
-    }, 500);
-    
-    // Store the interval ID on the button so we can clear it later
-    enterButton._loadingInterval = loadingInterval;
-
     try {
-        console.log('Fetching video info for URL:', url);
-        const response = await fetch(`${BACKEND_URL}/api/video-info`, {
+        // Check if it's a TikTok URL
+        const isTikTok = url.includes('tiktok.com') || url.includes('vm.tiktok.com');
+        const endpoint = isTikTok ? '/api/tiktok-info' : '/api/video-info';
+        
+        console.log(`Fetching from ${endpoint} for URL:`, url);
+        
+        const response = await fetch(`${BACKEND_URL}${endpoint}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ url })
+            body: JSON.stringify({ url: url })
         });
         
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || `Server error: ${response.status}`);
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
+        console.log('Received video data:', data);
         displayVideoData(data);
-        
     } catch (error) {
         console.error('Error fetching video info:', error);
         displayVideoError(`Failed to fetch video details: ${error.message}`);
     } finally {
-        // Restore UI state
+        // Hide loading state
         if (videoPreviewContainer && loadingContainer) {
             videoPreviewContainer.classList.remove('loading');
             loadingContainer.style.display = 'none';
@@ -287,6 +300,7 @@ function displayVideoData(videoData) {
                         ${duration ? `<div class="video-duration">${duration}</div>` : ''}
                         ${videoData.platform === 'youtube' ? `<div class="video-platform" data-platform="youtube">YouTube</div>` : ''}
                         ${videoData.platform === 'reddit' ? `<div class="video-platform" data-platform="reddit">Reddit</div>` : ''}
+                        ${videoData.platform === 'tiktok' ? `<div class="video-platform" data-platform="tiktok">TikTok</div>` : ''}
                     </div>
             </div>` 
         : ''}

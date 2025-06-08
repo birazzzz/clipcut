@@ -695,6 +695,11 @@ background-color: #FF4500; /* Reddit orange color */
 background-color: #1DA1F2; /* Twitter blue color */
 }
 
+/* TikTok platform chip */
+.video-platform[data-platform="tiktok"] {
+background-color: #000000; /* TikTok black color */
+}
+
 .video-info {
     padding: 0 4px;
     margin-top: 12px;

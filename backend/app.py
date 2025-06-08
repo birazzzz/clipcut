@@ -15,29 +15,40 @@ CORS(app, resources={
     }
 })
 
-# Configuration for yt-dlp
+# Configuration for yt-dlp options
 ydl_opts = {
-    'quiet': True,
-    'no_warnings': False,
+    'format': 'best',
+    'quiet': False,  # Set to False to see more detailed logs
+    'no_warnings': False,  # Show warnings to help with debugging
     'extract_flat': False,
-    'force_generic_extractor': True,
-    'socket_timeout': 30,  # Increase timeout for slow connections
-    'nocheckcertificate': True,
-    'ignoreerrors': True,
-    'noplaylist': True,
-    'extractor_retries': 3,
-    'retries': 3,
-    'fragment_retries': 3,
-    'skip_unavailable_fragments': True,
-    'compat_opts': {'no-youtube-unavailable-videos'},  # Add this line
+    'force_generic_extractor': False,
+    'extractor_retries': 5,
+    'socket_timeout': 30,
     'extractor_args': {
-        'twitter': {
-            'username': None,
-            'password': None,
-            'cookies': None,
-            'skip_auth': True,
-        },
+        'youtube': {'skip': ['dash', 'hls']},
+        'tiktok': {
+            'extract_flat': False,
+            'skip_download': True,
+            'extract_flat': 'in_playlist',
+            'noplaylist': True,
+        }
     },
+    'nocheckcertificate': True,
+    'ignoreerrors': False,
+    'no_color': True,
+    'cachedir': False,
+    'noplaylist': True,
+    'extract_flat': 'in_playlist',
+    'retries': 5,
+    'fragment_retries': 10,
+    'file_access_retries': 10,
+    'skip_unavailable_fragments': True,
+    'verbose': True,
+    # TikTok specific options
+    'extractor_retries': 5,
+    'fragment_retries': 5,
+    'retry_sleep': 1,
+    'sleep_interval_requests': 2,
     'http_headers': {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -49,7 +60,6 @@ ydl_opts = {
 def extract_video_info(info):
     """Extract video information from the yt-dlp info dict."""
     try:
-        # Determine platform
         extractor = info.get('extractor', '').lower()
         webpage_url = (info.get('webpage_url') or '').lower()
         
@@ -59,13 +69,36 @@ def extract_video_info(info):
             platform = 'twitter'
         elif 'reddit.com' in webpage_url or 'redd.it' in webpage_url or 'reddit' in extractor:
             platform = 'reddit'
-            # For Reddit, we might need to adjust the thumbnail URL to get a higher quality version
+        elif 'tiktok.com' in webpage_url or 'tiktok' in extractor or 'vm.tiktok.com' in webpage_url:
+            platform = 'tiktok'
+            
+            # Handle TikTok-specific data extraction
+            if not info.get('title') and info.get('description'):
+                info['title'] = info['description']
+                
+            # Ensure we have a valid thumbnail
+            if not info.get('thumbnail'):
+                # Try to get the best available thumbnail
+                for thumb in info.get('thumbnails', [])[::-1]:  # Try highest resolution first
+                    if thumb.get('url'):
+                        info['thumbnail'] = thumb['url']
+                        break
+                        
+                # If still no thumbnail, try to construct one from video ID
+                if not info.get('thumbnail') and info.get('id'):
+                    info['thumbnail'] = f"https://p16-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/placeholder.jpg?x-expires=9999999999&x-signature=PLACEHOLDER"
+                    
+        # For debugging
+        print(f"Extracting video info for platform: {platform}")
+        print(f"Available keys: {list(info.keys())}")
+        
+        # For Reddit, we might need to adjust the thumbnail URL to get a higher quality version
+        if platform == 'reddit':
             thumbnail = info.get('thumbnail', '')
             if thumbnail and 'external-preview' in thumbnail:
                 # Try to get a better quality thumbnail if available
                 thumbnail = thumbnail.replace('external-preview', 'preview')
-        else:
-            platform = 'other'
+                info['thumbnail'] = thumbnail
         
         # Get thumbnail - try different possible keys
         thumbnail = (
@@ -110,6 +143,94 @@ def debug_extractor_info(ydl, url):
         print(f"Debug extraction error: {str(e)}")
         raise
 
+@app.route('/api/tiktok-info', methods=['POST'])
+def get_tiktok_info():
+    data = request.get_json()
+    url = data.get('url')
+    
+    if not url:
+        return jsonify({'error': 'No URL provided'}), 400
+    
+    print(f"\n=== Processing TikTok URL: {url} ===")
+    
+    try:
+        # Try using the API endpoint directly
+        import re
+        import json
+        import requests
+        
+        # Extract video ID from URL
+        video_id = None
+        if 'vm.tiktok.com' in url:
+            # Resolve short URL first
+            session = requests.Session()
+            response = session.head(url, allow_redirects=True)
+            resolved_url = response.url
+            print(f"Resolved URL: {resolved_url}")
+            match = re.search(r'/video/(\d+)', resolved_url)
+            if match:
+                video_id = match.group(1)
+        else:
+            match = re.search(r'/video/(\d+)', url)
+            if match:
+                video_id = match.group(1)
+        
+        if not video_id:
+            return jsonify({'error': 'Could not extract video ID from URL'}), 400
+            
+        print(f"Extracted video ID: {video_id}")
+        
+        # Try to get video info from TikTok API
+        api_url = f'https://api16-normal-c-useast1a.tiktokv.com/aweme/v1/feed/?aweme_id={video_id}'
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'application/json',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Referer': 'https://www.tiktok.com/',
+            'Origin': 'https://www.tiktok.com',
+        }
+        
+        print(f"Fetching from API: {api_url}")
+        response = requests.get(api_url, headers=headers, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
+        if not data.get('aweme_list') or not data['aweme_list']:
+            return jsonify({'error': 'No video data found in API response'}), 400
+            
+        video_data = data['aweme_list'][0]
+        
+        # Extract relevant information
+        video_info = {
+            'title': video_data.get('desc', 'TikTok Video'),
+            'thumbnail': video_data.get('video', {}).get('cover', {}).get('url_list', [''])[0],
+            'duration': video_data.get('duration', 0),
+            'uploader': video_data.get('author', {}).get('unique_id', ''),
+            'webpage_url': f"https://www.tiktok.com/@{video_data.get('author', {}).get('unique_id', '')}/video/{video_id}",
+            'platform': 'tiktok',
+            'formats': []
+        }
+        
+        # Add video formats
+        if 'video' in video_data and 'play_addr' in video_data['video']:
+            play_addr = video_data['video']['play_addr']
+            video_info['formats'].append({
+                'url': play_addr.get('url_list', [''])[0],
+                'ext': 'mp4',
+                'format': 'Direct Video',
+                'quality': 'best'
+            })
+        
+        print(f"Successfully extracted TikTok video info")
+        return jsonify(video_info)
+        
+    except Exception as e:
+        print(f"Error in TikTok API: {str(e)}")
+        return jsonify({
+            'error': f'Failed to fetch TikTok video info: {str(e)}',
+            'type': 'tiktok_api_error'
+        }), 400
+
 @app.route('/api/video-info', methods=['POST'])
 @app.route('/api/video-info/', methods=['POST'])
 def get_video_info():
@@ -121,25 +242,84 @@ def get_video_info():
     
     print(f"\n=== Processing URL: {url} ===")
     
-    # Normalize Twitter/X URLs
+    # Normalize URLs
     if 'x.com' in url or 'twitter.com' in url:
         url = url.replace('x.com', 'twitter.com')
-        print(f"Normalized URL to: {url}")
+        print(f"Normalized Twitter URL to: {url}")
+    elif 'tiktok.com' in url or 'vm.tiktok.com' in url:
+        print("Processing TikTok URL")
+        # Ensure we're using the mobile URL for better compatibility
+        if 'vm.tiktok.com' not in url and '/video/' in url:
+            # Extract video ID from URL like https://www.tiktok.com/@username/video/1234567890123456789
+            import re
+            video_id_match = re.search(r'/video/(\d+)', url)
+            if video_id_match:
+                video_id = video_id_match.group(1)
+                url = f'https://www.tiktok.com/@placeholder/video/{video_id}'
+                print(f"Reformatted TikTok URL to: {url}")
+    
+    # Create a copy of ydl_opts to modify per request
+    request_ydl_opts = ydl_opts.copy()
+    
+    # Add TikTok specific options if needed
+    if 'tiktok.com' in url or 'vm.tiktok.com' in url:
+        print("Using TikTok-specific extractor options")
+        request_ydl_opts.update({
+            'extract_flat': False,
+            'noplaylist': True,
+            'ignore_no_formats_error': True,
+            'force_generic_extractor': True,  # Try generic extractor
+            'extractor_retries': 3,
+            'fragment_retries': 3,
+            'retries': 3,
+            'sleep_interval': 1,
+            'max_sleep_interval': 3,
+            'extractor_args': {
+                'tiktok': {
+                    'extract_flat': False,
+                    'skip_download': True,
+                    'extractor_retries': 3,
+                }
+            },
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Referer': 'https://www.tiktok.com/',
+                'Origin': 'https://www.tiktok.com',
+                'DNT': '1',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1',
+                'Cache-Control': 'max-age=0',
+                'TE': 'trailers',
+            }
+        })
     
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        with yt_dlp.YoutubeDL(request_ydl_opts) as ydl:
             # First, try to get basic info without downloading
             try:
                 print("Attempting to get video info...")
                 info = ydl.extract_info(url, download=False)
+                
                 if not info:
                     print("No info returned, trying with download=True...")
                     info = ydl.extract_info(url, download=True)
-                    
+                
                 if not info:
-                    return jsonify({'error': 'No video information found (empty response)'}), 400
+                    print("No video information found (empty response)")
+                    return jsonify({
+                        'error': 'No video information found (empty response)',
+                        'url': url,
+                        'type': 'empty_response'
+                    }), 400
                     
                 print(f"Successfully got info, keys: {list(info.keys())}")
+                print(f"Available formats: {[f.get('ext') for f in info.get('formats', []) if f.get('ext')]}")
                 
             except Exception as e:
                 print(f"Error extracting info: {str(e)}")
@@ -147,19 +327,29 @@ def get_video_info():
                 try:
                     print("Trying debug extraction...")
                     info = debug_extractor_info(ydl, url)
+                    if not info:
+                        raise Exception("Debug extraction returned no data")
                 except Exception as debug_e:
                     print(f"Debug extraction failed: {str(debug_e)}")
                     return jsonify({
                         'error': f'Failed to extract video info: {str(e)}',
-                        'debug_error': str(debug_e)
+                        'debug_error': str(debug_e),
+                        'url': url,
+                        'type': 'extraction_failed'
                     }), 400
             
             try:
                 video_info = extract_video_info(info)
                 print(f"Extracted video info: {video_info.keys() if video_info else 'None'}")
+                if not video_info:
+                    raise Exception("No video info extracted")
             except Exception as e:
                 print(f"Error in extract_video_info: {str(e)}")
-                return jsonify({'error': f'Error processing video info: {str(e)}'}), 400
+                return jsonify({
+                    'error': f'Error processing video info: {str(e)}',
+                    'url': url,
+                    'type': 'processing_error'
+                }), 400
             
             # Determine platform
             extractor = info.get('extractor', '').lower()
@@ -171,6 +361,8 @@ def get_video_info():
                 platform = 'twitter'
             elif 'reddit.com' in webpage_url or 'redd.it' in webpage_url or 'reddit' in extractor:
                 platform = 'reddit'
+            elif 'tiktok.com' in webpage_url or 'tiktok' in extractor:
+                platform = 'tiktok'
             else:
                 platform = 'other'
             

@@ -3,15 +3,46 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const BACKEND_URL = 'http://localhost:3001'; // Backend server URL
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../')));
+
+// Proxy API requests to the backend server
+app.use('/api', createProxyMiddleware({
+  target: BACKEND_URL,
+  changeOrigin: true,
+  pathRewrite: {
+    '^/api': '/api' // Rewrite path: remove /api
+  },
+  onProxyReq: (proxyReq, req, res) => {
+    console.log(`Proxying request: ${req.method} ${req.path} -> ${BACKEND_URL}${req.path}`);
+  },
+  onError: (err, req, res) => {
+    console.error('Proxy error:', err);
+    res.status(500).json({ error: 'Failed to connect to the backend server' });
+  }
+}));
+
+// Proxy download requests to the backend server
+app.use('/download', createProxyMiddleware({
+  target: BACKEND_URL,
+  changeOrigin: true,
+  onProxyReq: (proxyReq, req, res) => {
+    console.log(`Proxying download request: ${req.method} ${req.path} -> ${BACKEND_URL}${req.path}`);
+  },
+  onError: (err, req, res) => {
+    console.error('Download proxy error:', err);
+    res.status(500).json({ error: 'Failed to connect to the download server' });
+  }
+}));
 
 // Log all incoming requests for debugging
 app.use((req, res, next) => {

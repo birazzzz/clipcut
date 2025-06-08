@@ -1,5 +1,6 @@
 // Backend API URL - Update this if your backend is hosted elsewhere
-const BACKEND_URL = 'http://localhost:3000'; // Changed from 8001 to 3000
+// Pointing to the Python backend server
+const BACKEND_URL = 'http://localhost:3001'; // Python backend server
 
 // DOM Elements for Theme Toggle
 const themeToggle = document.getElementById('themeToggle');
@@ -97,14 +98,33 @@ function toggleEnterButtonState() {
 }
 
 /**
- * Extracts a YouTube video ID from various URL formats.
- * @param {string} url - The YouTube URL.
+ * Extracts a video ID from various URL formats.
+ * @param {string} url - The video URL.
  * @returns {string|null} The video ID or null if not found.
  */
 function extractVideoID(url) {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
+    // Handle YouTube URLs
+    const youtubeRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const youtubeMatch = url.match(youtubeRegExp);
+    if (youtubeMatch && youtubeMatch[2].length === 11) {
+        return youtubeMatch[2];
+    }
+    
+    // Handle Reddit URLs
+    const redditRegExp = /reddit\.com\/r\/\w+\/comments\/([a-zA-Z0-9]+)/;
+    const redditMatch = url.match(redditRegExp);
+    if (redditMatch && redditMatch[1]) {
+        return redditMatch[1];
+    }
+    
+    // Handle Reddit short URLs
+    const redditShortRegExp = /redd\.it\/([a-zA-Z0-9]+)/;
+    const redditShortMatch = url.match(redditShortRegExp);
+    if (redditShortMatch && redditShortMatch[1]) {
+        return redditShortMatch[1];
+    }
+    
+    return null;
 }
 
 /**
@@ -236,12 +256,16 @@ function displayVideoData(videoData) {
     const title = videoData.title || 'No title available';
     let thumbnailUrl = videoData.thumbnail || '';
     const isTwitter = videoData.platform === 'twitter';
+    const isReddit = videoData.platform === 'reddit';
     const videoId = extractVideoID(videoData.webpage_url || '');
     
-    // For Twitter, sometimes we need to use a different thumbnail URL format
+    // Platform-specific URL handling
     if (isTwitter && thumbnailUrl) {
         // Try to get a higher resolution thumbnail if available
         thumbnailUrl = thumbnailUrl.replace('&name=small', '&name=large');
+    } else if (isReddit && thumbnailUrl) {
+        // Ensure we're using a good quality Reddit thumbnail
+        thumbnailUrl = thumbnailUrl.replace('external-preview', 'preview');
     }
     
     // Format duration if available
@@ -250,24 +274,26 @@ function displayVideoData(videoData) {
     // Create the video info HTML
     let videoInfoHTML = `
         ${thumbnailUrl ? `
-            <div class="thumbnail-container" ${videoData.platform === 'youtube' ? 'data-video-id="' + videoId + '" onclick="embedYouTubeVideo(this, event)"' : ''}>
+            <div class="thumbnail-container" ${(videoData.platform === 'youtube' || videoData.platform === 'reddit') ? 'data-video-id="' + videoId + '" data-platform="' + videoData.platform + '" onclick="embedYouTubeVideo(this, event)"' : ''}>
                 <img class="video-thumbnail" src="${thumbnailUrl}" alt="${title}" title="${title}" onerror="this.onerror=null; this.style.display='none';">
-                ${videoData.platform === 'youtube' ? `
-                    <div class="play-button-overlay">
-                        <div class="play-button">
-                            <span class="material-icons-outlined">play_arrow</span>
+                    ${videoData.platform === 'youtube' || videoData.platform === 'reddit' ? `
+                        <div class="play-button-overlay">
+                            <div class="play-button">
+                                <span class="material-icons-outlined">play_arrow</span>
+                            </div>
                         </div>
+                    ` : ''}
+                    <div class="thumbnail-overlay">
+                        ${duration ? `<div class="video-duration">${duration}</div>` : ''}
+                        ${videoData.platform === 'youtube' ? `<div class="video-platform" data-platform="youtube">YouTube</div>` : ''}
+                        ${videoData.platform === 'reddit' ? `<div class="video-platform" data-platform="reddit">Reddit</div>` : ''}
                     </div>
-                ` : ''}
-                <div class="thumbnail-overlay">
-                    ${duration ? `<div class="video-duration">${duration}</div>` : ''}
-                    ${videoData.platform === 'youtube' ? `<div class="video-platform">YouTube</div>` : ''}
-                </div>
             </div>` 
         : ''}
         <div class="video-info">
             <div class="video-title">${title}</div>
-            ${videoData.platform === 'twitter' ? `<div class="video-platform">Twitter</div>` : ''}
+            ${videoData.platform === 'twitter' ? `<div class="video-platform" data-platform="twitter">Twitter</div>` : ''}
+            ${videoData.platform === 'reddit' && videoData.uploader ? `<div class="video-uploader">u/${videoData.uploader}</div>` : ''}
         </div>
     `;
     
@@ -329,29 +355,48 @@ function displayVideoError(message) {
 }
 
 /**
- * Embeds a YouTube video when the thumbnail is clicked
+ * Embeds a video when the thumbnail is clicked
  * @param {HTMLElement} element - The clicked element
  * @param {Event} event - The click event
  */
 function embedYouTubeVideo(element, event) {
-    // Prevent the click from bubbling up to parent elements
+    // Prevent the default action (in case it's a link)
+    event.preventDefault();
     event.stopPropagation();
     
     const videoId = element.getAttribute('data-video-id');
+    const platform = element.getAttribute('data-platform') || 'youtube';
     if (!videoId) return;
     
-    // Create the YouTube iframe
-    const iframe = document.createElement('iframe');
-    iframe.setAttribute('width', '100%');
-    iframe.setAttribute('height', '100%');
-    iframe.setAttribute('src', `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&showinfo=0`);
-    iframe.setAttribute('frameborder', '0');
-    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
-    iframe.setAttribute('allowfullscreen', '');
+    if (platform === 'youtube') {
+        // Create the YouTube iframe
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('width', '100%');
+        iframe.setAttribute('height', '100%');
+        iframe.setAttribute('src', `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&showinfo=0`);
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+        iframe.setAttribute('allowfullscreen', '');
+        
+        // Replace the thumbnail with the iframe
+        element.innerHTML = '';
+        element.appendChild(iframe);
+    } else if (platform === 'reddit') {
+        // Create the Reddit embed
+        const embedUrl = `https://www.redditmedia.com/r/videos/comments/${videoId}/?embed=true`;
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('src', embedUrl);
+        iframe.setAttribute('width', '100%');
+        iframe.setAttribute('height', '400');
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('scrolling', 'no');
+        iframe.style.overflow = 'hidden';
+        
+        // Replace the thumbnail with the iframe
+        element.innerHTML = '';
+        element.appendChild(iframe);
+    }
     
-    // Replace the thumbnail with the iframe
-    element.innerHTML = '';
-    element.appendChild(iframe);
     element.classList.add('video-embedded');
     
     // Remove the click handler to prevent re-embedding
@@ -426,13 +471,22 @@ async function handleDownload() {
         // Show preparing state
         downloadButton.innerHTML = '<span class="material-symbols-rounded spin">hourglass_empty</span> Preparing download...';
         
+        // For Reddit, ensure we're using the correct URL format
+        let downloadUrl = window.currentVideoUrl;
+        if (downloadUrl.includes('reddit.com') || downloadUrl.includes('redd.it')) {
+            // Remove any query parameters and fragments
+            downloadUrl = downloadUrl.split('?')[0].split('#')[0];
+            console.log('Processing Reddit URL:', downloadUrl);
+        }
+        
         // Start the download
-        const response = await fetch(`${BACKEND_URL}/download`, {
+        console.log('Sending download request to backend for URL:', downloadUrl);
+        const response = await fetch(`${BACKEND_URL}/api/download`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ url: window.currentVideoUrl })
+            body: JSON.stringify({ url: downloadUrl })
         });
 
         if (!response.ok) {

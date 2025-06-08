@@ -674,11 +674,25 @@ align-self: flex-start;
 font-size: 10px;
 font-weight: 600;
 color: white;
-background-color: rgba(255, 0, 0, 0.9);
 padding: 2px 6px;
 border-radius: 4px;
 text-transform: uppercase;
 letter-spacing: 0.5px;
+}
+
+/* YouTube platform chip */
+.video-platform[data-platform="youtube"] {
+background-color: rgba(255, 0, 0, 0.9);
+}
+
+/* Reddit platform chip */
+.video-platform[data-platform="reddit"] {
+background-color: #FF4500; /* Reddit orange color */
+}
+
+/* Twitter platform chip */
+.video-platform[data-platform="twitter"] {
+background-color: #1DA1F2; /* Twitter blue color */
 }
 
 .video-info {

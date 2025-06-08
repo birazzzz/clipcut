@@ -6,7 +6,14 @@ import tempfile
 import uuid
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+# Enable CORS for all routes with specific origins and methods
+CORS(app, resources={
+    r"/api/*": {
+        "origins": ["http://localhost:3000", "http://127.0.0.1:3000"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"]
+    }
+})
 
 # Configuration for yt-dlp
 ydl_opts = {
@@ -50,6 +57,13 @@ def extract_video_info(info):
             platform = 'youtube'
         elif 'twitter' in extractor or 'x.com' in webpage_url or 'twitter.com' in webpage_url:
             platform = 'twitter'
+        elif 'reddit.com' in webpage_url or 'redd.it' in webpage_url or 'reddit' in extractor:
+            platform = 'reddit'
+            # For Reddit, we might need to adjust the thumbnail URL to get a higher quality version
+            thumbnail = info.get('thumbnail', '')
+            if thumbnail and 'external-preview' in thumbnail:
+                # Try to get a better quality thumbnail if available
+                thumbnail = thumbnail.replace('external-preview', 'preview')
         else:
             platform = 'other'
         
@@ -97,6 +111,7 @@ def debug_extractor_info(ydl, url):
         raise
 
 @app.route('/api/video-info', methods=['POST'])
+@app.route('/api/video-info/', methods=['POST'])
 def get_video_info():
     data = request.get_json()
     url = data.get('url')
@@ -154,6 +169,8 @@ def get_video_info():
                 platform = 'youtube'
             elif 'twitter' in extractor or 'x.com' in webpage_url or 'twitter.com' in webpage_url:
                 platform = 'twitter'
+            elif 'reddit.com' in webpage_url or 'redd.it' in webpage_url or 'reddit' in extractor:
+                platform = 'reddit'
             else:
                 platform = 'other'
             
@@ -252,6 +269,7 @@ def get_video_info():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/download', methods=['POST'])
+@app.route('/api/download/', methods=['POST'])
 def download_video():
     data = request.get_json()
     url = data.get('url')
@@ -261,9 +279,16 @@ def download_video():
     
     print(f"\n=== Processing download for URL: {url} ===")
     
-    # Normalize Twitter/X URLs
+    # Normalize URLs
     if 'x.com' in url or 'twitter.com' in url:
         url = url.replace('x.com', 'twitter.com')
+    
+    # Handle Reddit URLs - ensure we're using the direct URL
+    if 'reddit.com' in url or 'redd.it' in url:
+        # Remove any query parameters that might cause issues
+        url = url.split('?')[0]
+        # Ensure we're using the old.reddit.com for better compatibility
+        url = url.replace('www.reddit.com', 'old.reddit.com')
     
     try:
         # Create a temporary directory for downloads
@@ -277,15 +302,41 @@ def download_video():
             'merge_output_format': 'mp4',
             'outtmpl': os.path.join(temp_dir, f'%(id)s.%(ext)s'),
             'noprogress': True,
+            # Add additional options for Reddit
+            'extractor_args': {
+                'reddit': {
+                    'username': None,
+                    'password': None,
+                    'cookies': None,
+                    'skip_auth': True,
+                },
+            },
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Referer': 'https://www.reddit.com/',
+            },
         }
         
         with yt_dlp.YoutubeDL(download_opts) as ydl:
             # Get info first to set filename
             info = ydl.extract_info(url, download=False)
+            print(f"Video info: {info}")
+            
             if not info:
                 return jsonify({'error': 'Could not retrieve video information'}), 400
-                
+            
+            # For Reddit, we might need to get the direct media URL
+            if 'reddit.com' in url or 'redd.it' in url:
+                print("Processing Reddit video...")
+                if 'url' in info and info['url']:
+                    # Use the direct media URL if available
+                    url = info['url']
+                    print(f"Using direct media URL: {url}")
+            
             # Download the video
+            print(f"Starting download for URL: {url}")
             ydl.download([url])
             
             # Get the actual filename
@@ -311,5 +362,5 @@ def download_video():
             print(f"Error cleaning up file {filename}: {str(e)}")
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8001))
+    port = int(os.environ.get('PORT', 3001))
     app.run(host='0.0.0.0', port=port, debug=True)
